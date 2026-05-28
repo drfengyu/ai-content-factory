@@ -2,8 +2,12 @@
 
 import React, { useState } from 'react';
 import { ContentType } from '@/types';
+import { Templates } from './Templates';
+import { Template } from '@/data/templates';
+import { Platform } from '@/types';
 
 interface GenerateFormProps {
+  platform: Platform;
   contentType: ContentType;
   onGenerate: (params: {
     topic: string;
@@ -18,12 +22,19 @@ interface GenerateFormProps {
 const TONES = ['种草', '活泼', '专业', '干货', '故事'];
 const LENGTHS = ['短', '中', '长'];
 
-export function GenerateForm({ contentType, onGenerate, loading }: GenerateFormProps) {
+export function GenerateForm({ platform, contentType, onGenerate, loading }: GenerateFormProps) {
   const [topic, setTopic] = useState('');
   const [keywords, setKeywords] = useState('');
   const [tone, setTone] = useState('种草');
   const [length, setLength] = useState('中');
   const [extraPrompt, setExtraPrompt] = useState('');
+
+  // 从模板填充
+  const handleTemplateSelect = (template: Template) => {
+    setTopic(template.topic);
+    setKeywords(template.keywords);
+    setTone(template.tone);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +44,9 @@ export function GenerateForm({ contentType, onGenerate, loading }: GenerateFormP
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 快捷模板 */}
+      <Templates platform={platform} onSelect={handleTemplateSelect} />
+
       {/* 主题输入 */}
       <div>
         <label className="block text-sm font-medium mb-2">
