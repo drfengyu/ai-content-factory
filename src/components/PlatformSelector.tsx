@@ -34,12 +34,6 @@ const PLATFORM_ACCENTS: Record<Platform, string> = {
   gongzhonghao: 'text-emerald-500',
 };
 
-const PLATFORM_BG_ACCENTS: Record<Platform, string> = {
-  xiaohongshu: 'group-hover:bg-rose-500/10',
-  douyin: 'group-hover:bg-zinc-100/10',
-  gongzhonghao: 'group-hover:bg-emerald-500/10',
-};
-
 export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) {
   const entries = Object.entries(PLATFORMS);
 

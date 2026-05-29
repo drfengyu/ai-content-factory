@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   CopySimple,
-  DownloadSimple,
   Check,
   FileText,
   FileCode,

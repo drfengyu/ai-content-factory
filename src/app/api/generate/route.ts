@@ -5,10 +5,12 @@ import {
   resolveActiveProvider,
   getActiveProviderId,
   clearProviderCache,
+  loadProviders,
   buildHeaders,
   buildRequestBody,
   getChatEndpoint,
 } from '@/lib/providers';
+import type { ProviderConfig } from '@/types/providers';
 import { extractContentFromJson, extractContentFromStream } from '@/lib/stream-parser';
 
 // POST /api/generate — 多渠道流式输出
@@ -56,17 +58,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiBase = resolved.resolvedBaseUrl;
     const headers = buildHeaders(resolved);
+    const model = body.modelId || process.env.AI_MODEL || resolved.config.defaultModel;
 
-    const response = await fetch(getChatEndpoint(resolved), {
+    const response = await fetch(getChatEndpoint(resolved, model), {
       method: 'POST',
       headers,
       body: JSON.stringify(
         buildRequestBody(resolved, [
           { role: 'system', content: prompt.system },
           { role: 'user', content: userMessage },
-        ])
+        ], { model })
       ),
     });
 
@@ -87,24 +89,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const contentType = response.headers.get('content-type') || '';
+    const responseContentType = response.headers.get('content-type') || '';
 
-    // 非流式响应：直接解析 JSON 返回
-    if (!contentType.includes('text/event-stream') && !contentType.includes('text/plain')) {
+    // 非流式响应：兼容 JSON 和纯文本，并统一返回给前端。
+    if (!responseContentType.includes('text/event-stream')) {
+      const rawText = await response.text();
+      let text = rawText;
+      let tokens = 0;
+
       try {
-        const data = await response.json();
-        const text = extractContentFromJson(data);
-        if (text) {
-          return Response.json({
-            content: text,
-            model: process.env.AI_MODEL || resolved.config.defaultModel,
-            tokens: data.usage?.total_tokens || 0,
-            provider: resolved.config.id,
-          });
-        }
+        const data = JSON.parse(rawText);
+        text = extractContentFromJson(data);
+        tokens = data.usage?.total_tokens || 0;
       } catch {
-        // fall through to text extraction
+        // 保留纯文本响应作为内容。
       }
+
+      if (text) {
+        return Response.json({
+          content: text,
+          model,
+          tokens,
+          provider: resolved.config.id,
+        });
+      }
+
+      return Response.json(
+        { error: 'AI 服务未返回可用内容' },
+        { status: 502 }
+      );
     }
 
     // 流式响应：转发 SSE
@@ -118,12 +131,10 @@ export async function POST(request: NextRequest) {
 
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    const isAnthropic = resolved.config.type === 'anthropic';
 
     const stream = new ReadableStream({
       async start(controller) {
         let buffer = '';
-        let lastEventType = '';
 
         try {
           while (true) {
@@ -142,7 +153,6 @@ export async function POST(request: NextRequest) {
 
               // 记录 event 类型（Claude 等使用 event: 行）
               if (line.startsWith('event: ')) {
-                lastEventType = line.slice(7);
                 continue;
               }
 
@@ -159,7 +169,7 @@ export async function POST(request: NextRequest) {
 
               try {
                 const parsed = JSON.parse(data);
-                const text = extractContentFromStream(parsed, lastEventType);
+                const text = extractContentFromStream(parsed);
 
                 if (text) {
                   controller.enqueue(
@@ -186,6 +196,7 @@ export async function POST(request: NextRequest) {
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
         'X-Provider': resolved.config.id,
+        'X-Model': model,
       },
     });
 
@@ -202,8 +213,7 @@ export async function POST(request: NextRequest) {
 function getProviderDebugInfo() {
   try {
     clearProviderCache();
-    const { loadProviders } = require('@/lib/providers');
-    return loadProviders().map((p: any) => ({
+    return loadProviders().map((p: ProviderConfig) => ({
       id: p.id,
       name: p.name,
       configured: !!process.env[p.apiKeyEnv],

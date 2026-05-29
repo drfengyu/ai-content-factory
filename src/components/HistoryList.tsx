@@ -14,9 +14,6 @@ import {
   CaretUp,
   ArrowCounterClockwise,
   MagnifyingGlass,
-  FunnelSimple,
-  DownloadSimple,
-  FileText,
   FileCode,
   MarkdownLogo,
   SelectionPlus,
@@ -135,6 +132,8 @@ export function HistoryList({ onSelect, fullView }: HistoryListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    // localStorage must be read after hydration to avoid server/client markup drift.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistory(getHistory());
   }, []);
 

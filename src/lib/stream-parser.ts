@@ -2,80 +2,127 @@
  * 从非流式 JSON 响应中提取文本内容
  * 兼容多种上游 API 格式
  */
-export function extractContentFromJson(data: any): string {
+type ApiObject = Record<string, unknown>;
+
+function isObject(value: unknown): value is ApiObject {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asObject(value: unknown): ApiObject {
+  return isObject(value) ? value : {};
+}
+
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function textFromParts(parts: unknown): string {
+  return asArray(parts).map((part) => asString(asObject(part).text)).join('');
+}
+
+export function extractContentFromJson(data: unknown): string {
+  const root = asObject(data);
+  const firstChoice = asObject(asArray(root.choices)[0]);
+  const message = asObject(firstChoice.message);
+
   // OpenAI Chat
-  if (data.choices?.[0]?.message?.content) {
-    return data.choices[0].message.content;
+  if (typeof message.content === 'string') {
+    return message.content;
   }
   // OpenAI Responses
-  if (data.output) {
-    return data.output
-      .filter((item: any) => item.type === 'message' || item.type === 'output_text')
-      .map((item: any) => item.content?.[0]?.text || item.text || '')
+  if (Array.isArray(root.output)) {
+    return root.output
+      .filter((item) => {
+        const outputItem = asObject(item);
+        return outputItem.type === 'message' || outputItem.type === 'output_text';
+      })
+      .map((item) => {
+        const outputItem = asObject(item);
+        const firstContent = asObject(asArray(outputItem.content)[0]);
+        return asString(firstContent.text) || asString(outputItem.text);
+      })
       .join('');
   }
   // Claude
-  if (data.content && Array.isArray(data.content)) {
-    return data.content.map((c: any) => c.text || '').join('');
+  if (Array.isArray(root.content)) {
+    return root.content.map((content) => asString(asObject(content).text)).join('');
   }
   // Gemini
-  if (data.candidates?.[0]?.content?.parts) {
-    return data.candidates[0].content.parts.map((p: any) => p.text || '').join('');
+  const firstCandidate = asObject(asArray(root.candidates)[0]);
+  const candidateContent = asObject(firstCandidate.content);
+  if (Array.isArray(candidateContent.parts)) {
+    return textFromParts(candidateContent.parts);
   }
   // 传统补全
-  if (data.choices?.[0]?.text) {
-    return data.choices[0].text;
+  if (typeof firstChoice.text === 'string') {
+    return firstChoice.text;
   }
-  return data.content || data.text || '';
+  return asString(root.content) || asString(root.text);
 }
 
 /**
  * 从 SSE data: JSON 行中提取文本内容
  * 兼容多种上游流式格式
  */
-export function extractContentFromStream(parsed: any, eventType: string): string {
+export function extractContentFromStream(parsed: unknown): string {
+  const root = asObject(parsed);
+  const firstChoice = asObject(asArray(root.choices)[0]);
+  const delta = asObject(firstChoice.delta);
+  const message = asObject(firstChoice.message);
+
   // === OpenAI Chat Completions（最常见）===
-  if (parsed.choices?.[0]?.delta?.content) {
-    return parsed.choices[0].delta.content;
+  if (typeof delta.content === 'string') {
+    return delta.content;
   }
   // message 而非 delta（某些 API 的非流式 chunk）
-  if (parsed.choices?.[0]?.message?.content) {
-    return parsed.choices[0].message.content;
+  if (typeof message.content === 'string') {
+    return message.content;
   }
   // 传统补全流式
-  if (parsed.choices?.[0]?.text) {
-    return parsed.choices[0].text;
+  if (typeof firstChoice.text === 'string') {
+    return firstChoice.text;
   }
 
   // === OpenAI Responses API ===
-  if (parsed.type === 'response.output_text.delta' && parsed.delta) {
-    return parsed.delta;
+  if (root.type === 'response.output_text.delta' && typeof root.delta === 'string') {
+    return root.delta;
   }
-  if (parsed.type === 'response.content_part.added' && parsed.content?.text) {
-    return parsed.content.text;
+  const content = asObject(root.content);
+  if (root.type === 'response.content_part.added' && typeof content.text === 'string') {
+    return content.text;
   }
 
   // === Anthropic Claude ===
-  if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-    return parsed.delta.text;
+  if (root.type === 'content_block_delta' && typeof delta.text === 'string') {
+    return delta.text;
   }
-  if (parsed.type === 'content_block_start' && parsed.content_block?.text) {
-    return parsed.content_block.text;
+  const contentBlock = asObject(root.content_block);
+  if (root.type === 'content_block_start' && typeof contentBlock.text === 'string') {
+    return contentBlock.text;
   }
-  if (parsed.type === 'message_start' && parsed.message?.content) {
-    if (Array.isArray(parsed.message.content)) {
-      return parsed.message.content.map((c: any) => c.text || '').join('');
-    }
+  const rootMessage = asObject(root.message);
+  if (root.type === 'message_start' && Array.isArray(rootMessage.content)) {
+    return rootMessage.content.map((item) => asString(asObject(item).text)).join('');
   }
 
   // === Google Gemini ===
-  if (parsed.candidates?.[0]?.content?.parts) {
-    return parsed.candidates[0].content.parts.map((p: any) => p.text || '').join('');
+  const firstCandidate = asObject(asArray(root.candidates)[0]);
+  const candidateContent = asObject(firstCandidate.content);
+  if (Array.isArray(candidateContent.parts)) {
+    return textFromParts(candidateContent.parts);
   }
 
   // === 兜底 ===
-  if (parsed.content) return parsed.content;
-  if (parsed.text) return parsed.text;
+  if (typeof root.content === 'string') {
+    return root.content;
+  }
+  if (typeof root.text === 'string') {
+    return root.text;
+  }
 
   return '';
 }

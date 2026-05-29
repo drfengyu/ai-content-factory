@@ -22,6 +22,8 @@ export interface GenerateRequest {
   extraPrompt?: string;
   /** 可选：指定使用的 API Provider ID，不传则用 ACTIVE_PROVIDER 环境变量 */
   providerId?: string;
+  /** 可选：指定模型名，不传则用 AI_MODEL 或 Provider 默认模型 */
+  modelId?: string;
 }
 
 // 生成响应

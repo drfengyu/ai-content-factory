@@ -9,13 +9,6 @@ const DEFAULT_PATH_PREFIX: Record<string, string> = {
   gemini: '/v1beta',    // Gemini 端点直接 /v1beta/models/{model}:generateContent
 };
 
-// 端点路径后缀（按 type）
-const ENDPOINT_SUFFIX: Record<string, string> = {
-  openai: '/chat/completions',
-  anthropic: '/v1/messages',
-  gemini: '',  // Gemini 特殊处理：包含模型名
-};
-
 // 配置文件路径
 const CONFIG_PATH = path.join(process.cwd(), 'config', 'providers.json');
 
@@ -152,12 +145,13 @@ export function buildRequestBody(
   resolved: ResolvedProvider,
   messages: { role: string; content: string }[],
   options?: {
+    model?: string;
     temperature?: number;
     maxTokens?: number;
     stream?: boolean;
   }
 ): object {
-  const model = process.env.AI_MODEL || resolved.config.defaultModel;
+  const model = options?.model || process.env.AI_MODEL || resolved.config.defaultModel;
   const { temperature = 0.8, maxTokens = 20000, stream = true } = options || {};
 
   // OpenAI 兼容格式
@@ -216,7 +210,7 @@ export function buildRequestBody(
  *               e.g. https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
  *               + API key 作为查询参数: ?key=xxx
  */
-export function getChatEndpoint(resolved: ResolvedProvider): string {
+export function getChatEndpoint(resolved: ResolvedProvider, modelOverride?: string): string {
   const base = resolved.resolvedBaseUrl; // 已包含 pathPrefix
 
   switch (resolved.config.type) {
@@ -224,7 +218,7 @@ export function getChatEndpoint(resolved: ResolvedProvider): string {
       return `${resolved.config.baseUrl.replace(/\/+$/, '')}/v1/messages`;
 
     case 'gemini': {
-      const model = process.env.AI_MODEL || resolved.config.defaultModel;
+      const model = modelOverride || process.env.AI_MODEL || resolved.config.defaultModel;
       return `${base}/models/${model}:generateContent?key=${resolved.apiKey}`;
     }
 

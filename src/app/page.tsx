@@ -19,7 +19,10 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
   const [activeTab, setActiveTab] = useState<'generate' | 'history'>('generate');
-  const [providerId, setProviderId] = useState<string | null>(null);
+  const [providerSelection, setProviderSelection] = useState<{
+    providerId: string;
+    modelId: string | null;
+  } | null>(null);
 
   const handleGenerate = async (params: {
     topic: string;
@@ -43,13 +46,41 @@ export default function Home() {
           platform,
           contentType,
           ...params,
-          providerId: providerId || undefined,
+          providerId: providerSelection?.providerId,
+          modelId: providerSelection?.modelId || undefined,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || '生成失败');
+      }
+
+      const responseContentType = response.headers.get('content-type') || '';
+
+      if (responseContentType.includes('application/json')) {
+        const data = await response.json();
+        const finalContent = data.content || '';
+        if (!finalContent) {
+          throw new Error('AI 未返回可用内容');
+        }
+
+        setResult({
+          content: finalContent,
+          tokens: data.tokens || 0,
+          model: data.model || 'unknown',
+        });
+
+        if (platform && contentType) {
+          saveToHistory({
+            platform,
+            contentType,
+            topic: params.topic,
+            content: finalContent,
+          });
+          setHistoryKey((k) => k + 1);
+        }
+        return;
       }
 
       const reader = response.body?.getReader();
@@ -90,7 +121,7 @@ export default function Home() {
       setResult({
         content: finalContent,
         tokens: 0,
-        model: 'deepseek-v4-flash',
+        model: response.headers.get('X-Model') || 'unknown',
       });
       setStreamingContent('');
 
@@ -123,8 +154,6 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const hasContent = platform && contentType;
-
   return (
     <div className="min-h-dvh bg-background">
       {/* Header */}
@@ -144,7 +173,11 @@ export default function Home() {
             </div>
             {/* Provider Switch */}
             <div className="absolute right-6 top-6">
-              <ProviderSwitch onProviderChange={setProviderId} />
+              <ProviderSwitch
+                onProviderChange={(providerId, modelId) => {
+                  setProviderSelection({ providerId, modelId });
+                }}
+              />
             </div>
           </div>
         </div>

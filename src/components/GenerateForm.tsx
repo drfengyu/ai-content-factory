@@ -7,8 +7,6 @@ import { Templates } from './Templates';
 import { Template } from '@/data/templates';
 import { Platform } from '@/types';
 import {
-  Lightning,
-  NotePencil,
   ArrowRight,
   MagicWand,
 } from '@phosphor-icons/react';
@@ -29,7 +27,7 @@ interface GenerateFormProps {
 const TONES = ['种草', '活泼', '专业', '干货', '故事'];
 const LENGTHS = ['短', '中', '长'];
 
-export function GenerateForm({ platform, contentType, onGenerate, loading }: GenerateFormProps) {
+export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProps) {
   const [topic, setTopic] = useState('');
   const [keywords, setKeywords] = useState('');
   const [tone, setTone] = useState('种草');
