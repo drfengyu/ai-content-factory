@@ -1,45 +1,96 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'motion/react';
 import { PLATFORMS, CONTENT_TYPES } from '@/data/prompts';
 import { Platform, ContentType } from '@/types';
+import {
+  BookOpenText,
+  MusicNote,
+  Newspaper,
+  Sparkle,
+  FileText,
+  Tag,
+  VideoCamera,
+  Lightning,
+  ListDashes,
+  Article,
+} from '@phosphor-icons/react';
 
 interface PlatformSelectorProps {
   selected: Platform | null;
   onSelect: (platform: Platform) => void;
 }
 
+const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
+  xiaohongshu: <BookOpenText size={28} weight="regular" />,
+  douyin: <MusicNote size={28} weight="regular" />,
+  gongzhonghao: <Newspaper size={28} weight="regular" />,
+};
+
+const PLATFORM_ACCENTS: Record<Platform, string> = {
+  xiaohongshu: 'text-rose-500',
+  douyin: 'text-zinc-100',
+  gongzhonghao: 'text-emerald-500',
+};
+
+const PLATFORM_BG_ACCENTS: Record<Platform, string> = {
+  xiaohongshu: 'group-hover:bg-rose-500/10',
+  douyin: 'group-hover:bg-zinc-100/10',
+  gongzhonghao: 'group-hover:bg-emerald-500/10',
+};
+
 export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) {
+  const entries = Object.entries(PLATFORMS);
+
   return (
-    <div className="grid grid-cols-3 gap-4 mb-8">
-      {Object.entries(PLATFORMS).map(([key, platform]) => {
-        const isSelected = selected === key;
-        return (
-          <button
-            key={key}
-            onClick={() => onSelect(key as Platform)}
-            className={`relative p-6 rounded-2xl border-2 transition-all duration-300 text-left
-              ${isSelected 
-                ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20' 
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 bg-white dark:bg-gray-800'
+    <section className="mb-8">
+      <div className="grid grid-cols-3 gap-3">
+        {entries.map(([key, platform], i) => {
+          const isSelected = selected === key;
+          return (
+            <motion.button
+              key={key}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+              onClick={() => onSelect(key as Platform)}
+              className={`group relative flex flex-col items-center gap-2 p-6 rounded-xl border transition-all duration-200 active:scale-[0.98] ${
+                isSelected
+                  ? 'border-accent bg-accent-soft'
+                  : 'border-border-subtle bg-surface hover:border-zinc-400 dark:hover:border-zinc-500'
               }`}
-          >
-            <div className="text-4xl mb-3">{platform.icon}</div>
-            <h3 className="text-xl font-bold mb-1">{platform.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{platform.description}</p>
-            {isSelected && (
-              <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+            >
+              <div className={`transition-colors duration-200 ${
+                isSelected ? 'text-accent' : PLATFORM_ACCENTS[key as Platform]
+              }`}>
+                {PLATFORM_ICONS[key as Platform]}
               </div>
-            )}
-          </button>
-        );
-      })}
-    </div>
+              <span className={`text-sm font-medium ${
+                isSelected ? 'text-accent' : 'text-foreground'
+              }`}>
+                {platform.name}
+              </span>
+              <span className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center leading-tight">
+                {platform.description}
+              </span>
+            </motion.button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
+
+const TYPE_ICONS: Record<ContentType, React.ReactNode> = {
+  xiaohongshu_title: <Sparkle size={20} weight="fill" />,
+  xiaohongshu_copy: <FileText size={20} weight="regular" />,
+  xiaohongshu_hashtag: <Tag size={20} weight="regular" />,
+  douyin_script: <VideoCamera size={20} weight="regular" />,
+  douyin_hook: <Lightning size={20} weight="fill" />,
+  gongzhonghao_outline: <ListDashes size={20} weight="regular" />,
+  gongzhonghao_article: <Article size={20} weight="regular" />,
+};
 
 interface ContentTypeSelectorProps {
   platform: Platform;
@@ -52,25 +103,40 @@ export function ContentTypeSelector({ platform, selected, onSelect }: ContentTyp
     .filter(([, config]) => config.platform === platform);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
-      {types.map(([key, config]) => {
-        const isSelected = selected === key;
-        return (
-          <button
-            key={key}
-            onClick={() => onSelect(key as ContentType)}
-            className={`p-4 rounded-xl border-2 transition-all duration-200 text-left
-              ${isSelected 
-                ? 'border-blue-500 bg-blue-500/10' 
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+    <section className="mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {types.map(([key, config], i) => {
+          const isSelected = selected === key;
+          return (
+            <motion.button
+              key={key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: 0.05 * i, ease: [0.16, 1, 0.3, 1] }}
+              onClick={() => onSelect(key as ContentType)}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-left active:scale-[0.98] ${
+                isSelected
+                  ? 'border-accent bg-accent-soft'
+                  : 'border-border-subtle bg-surface hover:border-zinc-400 dark:hover:border-zinc-500'
               }`}
-          >
-            <div className="text-2xl mb-2">{config.icon}</div>
-            <div className="font-semibold">{config.name}</div>
-            <div className="text-xs text-gray-500 mt-1">{config.description}</div>
-          </button>
-        );
-      })}
-    </div>
+            >
+              <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${
+                isSelected
+                  ? 'bg-accent text-white'
+                  : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400'
+              }`}>
+                {TYPE_ICONS[key as ContentType]}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-medium">{config.name}</div>
+                <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                  {config.description}
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+    </section>
   );
 }

@@ -20,6 +20,8 @@ export interface GenerateRequest {
   tone?: '活泼' | '专业' | '种草' | '干货' | '故事';
   length?: '短' | '中' | '长';
   extraPrompt?: string;
+  /** 可选：指定使用的 API Provider ID，不传则用 ACTIVE_PROVIDER 环境变量 */
+  providerId?: string;
 }
 
 // 生成响应

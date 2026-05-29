@@ -1,13 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { ContentType } from '@/types';
 import { Templates } from './Templates';
 import { Template } from '@/data/templates';
 import { Platform } from '@/types';
+import {
+  Lightning,
+  NotePencil,
+  ArrowRight,
+  MagicWand,
+} from '@phosphor-icons/react';
 
 interface GenerateFormProps {
-  platform: Platform;
+  platform: Platform | null;
   contentType: ContentType;
   onGenerate: (params: {
     topic: string;
@@ -29,7 +36,6 @@ export function GenerateForm({ platform, contentType, onGenerate, loading }: Gen
   const [length, setLength] = useState('中');
   const [extraPrompt, setExtraPrompt] = useState('');
 
-  // 从模板填充
   const handleTemplateSelect = (template: Template) => {
     setTopic(template.topic);
     setKeywords(template.keywords);
@@ -42,120 +48,161 @@ export function GenerateForm({ platform, contentType, onGenerate, loading }: Gen
     onGenerate({ topic, keywords, tone, length, extraPrompt });
   };
 
+  if (loading) {
+    return <GenerateFormSkeleton />;
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 快捷模板 */}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Templates */}
       <Templates platform={platform} onSelect={handleTemplateSelect} />
 
-      {/* 主题输入 */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
+      {/* Topic */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">
           主题 / 产品名称 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="例如：夏日防晒霜推荐、Python学习心得..."
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 
-                     bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     outline-none transition-all"
+          placeholder="夏日防晒霜推荐、Python学习心得"
+          className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
+                     text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
+                     focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
+                     transition-all"
           required
         />
       </div>
 
-      {/* 关键词 */}
-      <div>
-        <label className="block text-sm font-medium mb-2">关键词（可选）</label>
+      {/* Keywords */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">关键词</label>
         <input
           type="text"
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
-          placeholder="例如：防晒、清爽、不假白"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 
-                     bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     outline-none transition-all"
+          placeholder="防晒、清爽、不假白"
+          className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
+                     text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
+                     focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
+                     transition-all"
         />
       </div>
 
-      {/* 语气选择 */}
-      <div>
-        <label className="block text-sm font-medium mb-2">语气风格</label>
-        <div className="flex flex-wrap gap-2">
-          {TONES.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTone(t)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all
-                ${tone === t 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+      {/* Tone + Length in a 2-col grid (taste-skill: grid over flex-math) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">语气风格</label>
+          <div className="flex flex-wrap gap-1.5">
+            {TONES.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTone(t)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
+                  tone === t
+                    ? 'bg-accent text-white'
+                    : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400 hover:text-foreground'
                 }`}
-            >
-              {t}
-            </button>
-          ))}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">内容长度</label>
+          <div className="flex gap-1.5">
+            {LENGTHS.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLength(l)}
+                className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
+                  length === l
+                    ? 'bg-accent text-white'
+                    : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400 hover:text-foreground'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 长度选择 */}
-      <div>
-        <label className="block text-sm font-medium mb-2">内容长度</label>
-        <div className="flex gap-2">
-          {LENGTHS.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLength(l)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all
-                ${length === l 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 补充要求 */}
-      <div>
-        <label className="block text-sm font-medium mb-2">补充要求（可选）</label>
+      {/* Extra Prompt */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">补充要求</label>
         <textarea
           value={extraPrompt}
           onChange={(e) => setExtraPrompt(e.target.value)}
-          placeholder="例如：加入emoji、使用第一人称、不要用感叹号..."
+          placeholder="加入数据引用、使用第一人称、避免套话"
           rows={3}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 
-                     bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     outline-none transition-all resize-none"
+          className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
+                     text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
+                     focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
+                     transition-all resize-none"
         />
       </div>
 
-      {/* 生成按钮 */}
-      <button
+      {/* Submit */}
+      <motion.button
         type="submit"
-        disabled={loading || !topic.trim()}
-        className={`w-full py-4 rounded-xl font-bold text-lg transition-all
-          ${loading || !topic.trim()
-            ? 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed'
-            : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl'
-          }`}
+        disabled={!topic.trim()}
+        whileTap={{ scale: 0.98 }}
+        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
+          !topic.trim()
+            ? 'bg-surface-elevated text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
+            : 'bg-accent text-white hover:brightness-110 shadow-sm'
+        }`}
       >
-        {loading ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            AI 正在生成...
-          </span>
-        ) : (
-          '✨ 开始生成'
-        )}
-      </button>
+        <MagicWand size={16} weight="fill" />
+        生成内容
+        <ArrowRight size={16} weight="bold" />
+      </motion.button>
     </form>
+  );
+}
+
+function GenerateFormSkeleton() {
+  return (
+    <div className="space-y-5">
+      <div className="flex gap-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="skeleton h-7 w-20" />
+        ))}
+      </div>
+      <div className="space-y-1.5">
+        <div className="skeleton h-4 w-24" />
+        <div className="skeleton h-10 w-full" />
+      </div>
+      <div className="space-y-1.5">
+        <div className="skeleton h-4 w-16" />
+        <div className="skeleton h-10 w-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <div className="skeleton h-4 w-16" />
+          <div className="flex gap-1.5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton h-7 flex-1" />
+            ))}
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <div className="skeleton h-4 w-16" />
+          <div className="flex gap-1.5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton h-7 flex-1" />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="skeleton h-20 w-full" />
+      <div className="skeleton h-11 w-full" />
+    </div>
   );
 }

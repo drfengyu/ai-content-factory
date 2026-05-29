@@ -1,44 +1,70 @@
 'use client';
 
 import React from 'react';
+import { motion } from 'motion/react';
 import { getTemplatesByPlatform, Template } from '@/data/templates';
 import { Platform } from '@/types';
+import {
+  Palette,
+  Drop,
+  Compass,
+  ForkKnife,
+  Books,
+  Lightbulb,
+  CookingPot,
+  ChartBar,
+  Briefcase,
+  Heart,
+} from '@phosphor-icons/react';
 
 interface TemplatesProps {
-  platform: Platform;
+  platform: Platform | null;
   onSelect: (template: Template) => void;
 }
 
+const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
+  'xhs-beauty': <Palette size={16} weight="duotone" />,
+  'xhs-skincare': <Drop size={16} weight="duotone" />,
+  'xhs-travel': <Compass size={16} weight="duotone" />,
+  'xhs-food': <ForkKnife size={16} weight="duotone" />,
+  'dy-knowledge': <Books size={16} weight="duotone" />,
+  'dy-life': <Lightbulb size={16} weight="duotone" />,
+  'dy-food': <CookingPot size={16} weight="duotone" />,
+  'gzh-industry': <ChartBar size={16} weight="duotone" />,
+  'gzh-career': <Briefcase size={16} weight="duotone" />,
+  'gzh-emotion': <Heart size={16} weight="duotone" />,
+};
+
 export function Templates({ platform, onSelect }: TemplatesProps) {
+  if (!platform) return null;
   const templates = getTemplatesByPlatform(platform);
 
   if (templates.length === 0) return null;
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          💡 快捷模板
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 tracking-wide uppercase">
+          快捷模板
         </span>
-        <span className="text-xs text-gray-400">点击一键填充</span>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {templates.map((template) => (
-          <button
+          <motion.button
             key={template.id}
+            type="button"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
             onClick={() => onSelect(template)}
-            className="group flex items-center gap-2 px-3 py-2 rounded-lg 
-                       bg-gray-100 dark:bg-gray-800 
-                       hover:bg-blue-100 dark:hover:bg-blue-900/30
-                       border border-transparent hover:border-blue-300 dark:hover:border-blue-700
-                       transition-all text-sm"
-            title={template.description}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
+                       bg-surface-elevated text-xs text-zinc-500 dark:text-zinc-400
+                       hover:text-accent hover:bg-accent/10
+                       border border-border-subtle hover:border-accent/30
+                       transition-all"
           >
-            <span>{template.icon}</span>
-            <span className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-              {template.name}
-            </span>
-          </button>
+            {TEMPLATE_ICONS[template.id] || null}
+            <span>{template.name}</span>
+          </motion.button>
         ))}
       </div>
     </div>

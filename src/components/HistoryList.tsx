@@ -1,6 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  ClockCounterClockwise,
+  BookOpenText,
+  MusicNote,
+  Newspaper,
+  TrashSimple,
+  CopySimple,
+  Check,
+  CaretDown,
+  CaretUp,
+  ArrowCounterClockwise,
+  MagnifyingGlass,
+  FunnelSimple,
+  DownloadSimple,
+  FileText,
+  FileCode,
+  MarkdownLogo,
+  SelectionPlus,
+  SelectionSlash,
+} from '@phosphor-icons/react';
 
 export interface HistoryItem {
   id: string;
@@ -14,7 +35,6 @@ export interface HistoryItem {
 const STORAGE_KEY = 'ai-content-factory-history';
 const MAX_ITEMS = 50;
 
-// 获取历史记录
 export function getHistory(): HistoryItem[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -25,95 +45,124 @@ export function getHistory(): HistoryItem[] {
   }
 }
 
-// 保存历史记录
 export function saveToHistory(item: Omit<HistoryItem, 'id' | 'createdAt'>): HistoryItem {
   const newItem: HistoryItem = {
     ...item,
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     createdAt: Date.now(),
   };
-  
   const history = getHistory();
   history.unshift(newItem);
-  
-  // 限制最大数量
-  if (history.length > MAX_ITEMS) {
-    history.splice(MAX_ITEMS);
-  }
-  
+  if (history.length > MAX_ITEMS) history.splice(MAX_ITEMS);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
   return newItem;
 }
 
-// 删除历史记录
 export function deleteFromHistory(id: string): void {
-  const history = getHistory().filter(item => item.id !== id);
+  const history = getHistory().filter((item) => item.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
 }
 
-// 清空历史记录
 export function clearHistory(): void {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-// 格式化时间
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
-  
   if (diff < 60 * 1000) return '刚刚';
   if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60 / 1000)} 分钟前`;
   if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 60 / 60 / 1000)} 小时前`;
-  
-  return date.toLocaleDateString('zh-CN', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-// 平台图标
-const PLATFORM_ICONS: Record<string, string> = {
-  xiaohongshu: '📕',
-  douyin: '🎵',
-  gongzhonghao: '📰',
+const PLATFORM_CONFIG: Record<string, { icon: React.ReactNode; label: string }> = {
+  xiaohongshu: { icon: <BookOpenText size={14} weight="fill" className="text-rose-500" />, label: '小红书' },
+  douyin: { icon: <MusicNote size={14} weight="fill" className="text-zinc-400" />, label: '抖音' },
+  gongzhonghao: { icon: <Newspaper size={14} weight="fill" className="text-emerald-500" />, label: '公众号' },
 };
 
-// 内容类型名称
 const CONTENT_TYPE_NAMES: Record<string, string> = {
-  xiaohongshu_title: '爆款标题',
-  xiaohongshu_copy: '种草文案',
-  xiaohongshu_hashtag: '话题标签',
-  douyin_script: '视频脚本',
-  douyin_hook: '开头钩子',
-  gongzhonghao_outline: '文章大纲',
-  gongzhonghao_article: '完整文章',
+  xiaohongshu_title: '爆款标题', xiaohongshu_copy: '种草文案', xiaohongshu_hashtag: '话题标签',
+  douyin_script: '视频脚本', douyin_hook: '开头钩子',
+  gongzhonghao_outline: '文章大纲', gongzhonghao_article: '完整文章',
 };
+
+/** 将内容导出为 HTML */
+function contentToHtml(text: string, title: string): string {
+  const lines = text.split('\n').map(l => {
+    const t = l.trim();
+    if (!t) return '<br>';
+    if (/^#{1,6}\s/.test(t)) {
+      const level = t.match(/^(#+)/)![1].length;
+      return `<h${level}>${t.replace(/^#+\s*/, '')}</h${level}>`;
+    }
+    return `<p>${t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`;
+  });
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>${title}</title>
+<style>body{max-width:720px;margin:40px auto;padding:0 20px;font:16px/1.7 -apple-system,sans-serif;color:#222;}
+h1{font-size:24px;border-bottom:2px solid #eee;padding-bottom:8px;}
+h2{font-size:20px;margin-top:28px;}p{margin:8px 0;}
+code{background:#f4f4f5;padding:2px 6px;border-radius:4px;font-size:14px;}
+pre{background:#f4f4f5;padding:16px;border-radius:8px;overflow-x:auto;}</style></head>
+<body>${lines.join('\n')}</body></html>`;
+}
+
+/** 导出文件 */
+function downloadFile(content: string, filename: string, mime: string, ext: string) {
+  const blob = new Blob([content], { type: `${mime};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.${ext}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface HistoryListProps {
   onSelect: (item: HistoryItem) => void;
+  fullView?: boolean;
 }
 
-export function HistoryList({ onSelect }: HistoryListProps) {
+export function HistoryList({ onSelect, fullView }: HistoryListProps) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [platformFilter, setPlatformFilter] = useState<string>('all');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setHistory(getHistory());
   }, []);
 
+  // 过滤 + 搜索
+  const filtered = useMemo(() => {
+    let items = history;
+    if (platformFilter !== 'all') items = items.filter((i) => i.platform === platformFilter);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      items = items.filter((i) => i.topic.toLowerCase().includes(q) || i.content.toLowerCase().includes(q));
+    }
+    return items;
+  }, [history, platformFilter, search]);
+
+  const displayItems = fullView ? filtered : filtered.slice(0, 5);
+
+  // ===== 操作 =====
   const handleDelete = (id: string) => {
     deleteFromHistory(id);
     setHistory(getHistory());
+    selectedIds.delete(id);
   };
 
   const handleClear = () => {
     if (confirm('确定要清空所有历史记录吗？')) {
       clearHistory();
       setHistory([]);
+      setSelectedIds(new Set());
     }
   };
 
@@ -123,92 +172,193 @@ export function HistoryList({ onSelect }: HistoryListProps) {
     setTimeout(() => setCopied(null), 2000);
   };
 
+  const toggleSelect = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`确定要删除选中的 ${selectedIds.size} 条记录吗？`)) return;
+    for (const id of selectedIds) deleteFromHistory(id);
+    setHistory(getHistory());
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchExport = (format: 'txt' | 'md' | 'html') => {
+    const items = history.filter((i) => selectedIds.has(i.id));
+    if (items.length === 0) return;
+    const combined = items
+      .map((i) => {
+        const platform = PLATFORM_CONFIG[i.platform]?.label || i.platform;
+        const type = CONTENT_TYPE_NAMES[i.contentType] || i.contentType;
+        const header = format === 'html' ? `<h2>${platform} · ${type}：${i.topic}</h2>` : `## ${platform} · ${type}：${i.topic}\n`;
+        const body = format === 'html' ? contentToHtml(i.content, `${i.topic}`) : i.content;
+        return format === 'html' ? header + body : `${header}\n${body}\n---\n`;
+      })
+      .join('\n');
+    const mime = format === 'html' ? 'text/html' : format === 'md' ? 'text/markdown' : 'text/plain';
+    downloadFile(format === 'html' ? contentToHtml(combined, `历史记录导出 ${new Date().toLocaleDateString()}`) : combined, `历史记录-${Date.now()}`, mime, format);
+  };
+
   if (history.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-400">
-        <div className="text-4xl mb-2">📝</div>
-        <p>暂无历史记录</p>
-        <p className="text-sm mt-1">生成的内容会自动保存在这里</p>
+      <div className="py-12 text-center">
+        <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-surface-elevated flex items-center justify-center">
+          <ClockCounterClockwise size={24} className="text-zinc-400" weight="light" />
+        </div>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">暂无历史记录</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">生成的内容会自动保存在这里</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-700 dark:text-gray-300">
-          历史记录 ({history.length})
-        </h3>
-        <button
-          onClick={handleClear}
-          className="text-sm text-gray-400 hover:text-red-500 transition-colors"
-        >
-          清空
-        </button>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ClockCounterClockwise size={16} className="text-zinc-500 dark:text-zinc-400" />
+          <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">历史记录</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">{history.length}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs transition-all ${
+              selectMode ? 'bg-accent/10 text-accent' : 'text-zinc-400 hover:text-foreground'}`}
+            title={selectMode ? '退出选择' : '批量选择'}
+          >
+            {selectMode ? <SelectionSlash size={12} /> : <SelectionPlus size={12} />}
+            {selectMode ? '退出' : '选择'}
+          </button>
+          <button onClick={handleClear}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-zinc-400 hover:text-red-500 transition-all">
+            <TrashSimple size={12} />清空
+          </button>
+        </div>
       </div>
-      
-      {history.map((item) => (
-        <div
-          key={item.id}
-          className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-blue-300 dark:hover:border-blue-600 transition-all"
+
+      {/* Search + Filter */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <MagnifyingGlass size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="搜索主题或内容…"
+            className="w-full pl-8 pr-3 py-2 rounded-lg border border-border-subtle bg-background text-xs text-foreground
+                       placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition-all"
+          />
+        </div>
+        <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)}
+          className="px-2 py-2 rounded-lg border border-border-subtle bg-background text-xs text-foreground
+                     focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all appearance-none cursor-pointer"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span>{PLATFORM_ICONS[item.platform] || '📄'}</span>
-                <span className="text-xs text-gray-400">
-                  {CONTENT_TYPE_NAMES[item.contentType] || item.contentType}
-                </span>
-                <span className="text-xs text-gray-400">·</span>
-                <span className="text-xs text-gray-400">
-                  {formatTime(item.createdAt)}
-                </span>
+          <option value="all">全部平台</option>
+          <option value="xiaohongshu">小红书</option>
+          <option value="douyin">抖音</option>
+          <option value="gongzhonghao">公众号</option>
+        </select>
+      </div>
+
+      {/* Batch actions bar */}
+      {selectMode && selectedIds.size > 0 && (
+        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent/5 border border-accent/20"
+        >
+          <span className="text-xs text-accent font-medium">已选 {selectedIds.size} 项</span>
+          <div className="flex-1" />
+          <button onClick={handleBatchDelete} className="flex items-center gap-1 px-2 py-1 rounded text-xs text-red-500 hover:bg-red-500/10 transition-all">
+            <TrashSimple size={11} />删除
+          </button>
+          <button onClick={() => handleBatchExport('md')} className="flex items-center gap-1 px-2 py-1 rounded text-xs text-zinc-500 hover:text-foreground transition-all">
+            <MarkdownLogo size={11} />导出 .md
+          </button>
+          <button onClick={() => handleBatchExport('html')} className="flex items-center gap-1 px-2 py-1 rounded text-xs text-zinc-500 hover:text-foreground transition-all">
+            <FileCode size={11} />导出 .html
+          </button>
+        </motion.div>
+      )}
+
+      {/* List */}
+      <AnimatePresence initial={false}>
+        {displayItems.map((item) => (
+          <motion.div key={item.id} layout
+            initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}
+            className={`group rounded-xl border transition-all ${
+              selectedIds.has(item.id) ? 'border-accent/50 bg-accent/[0.03]' : 'border-border-subtle bg-surface hover:border-accent/30'
+            }`}
+          >
+            <div className="flex items-start gap-3 p-3">
+              {/* Checkbox (select mode) */}
+              {selectMode && (
+                <button onClick={() => toggleSelect(item.id)}
+                  className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 transition-all ${
+                    selectedIds.has(item.id) ? 'bg-accent border-accent' : 'border-zinc-300 dark:border-zinc-600'
+                  }`}
+                >
+                  {selectedIds.has(item.id) && <Check size={12} weight="bold" className="text-white mx-auto" />}
+                </button>
+              )}
+
+              {/* Platform icon */}
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-elevated flex items-center justify-center">
+                {PLATFORM_CONFIG[item.platform]?.icon || <BookOpenText size={14} />}
               </div>
-              <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
-                {item.topic}
-              </p>
-              
-              {/* 展开内容 */}
-              {expanded === item.id && (
-                <div className="mt-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap max-h-48 overflow-y-auto">
-                  {item.content}
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                    {CONTENT_TYPE_NAMES[item.contentType] || item.contentType}
+                  </span>
+                  <span className="text-zinc-600 dark:text-zinc-500">·</span>
+                  <span className="text-[11px] text-zinc-500 dark:text-zinc-400">{formatTime(item.createdAt)}</span>
+                </div>
+                <p className="text-sm font-medium truncate">{item.topic}</p>
+
+                <AnimatePresence>
+                  {expanded === item.id && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }} className="mt-2 overflow-hidden"
+                    >
+                      <div className="p-3 rounded-lg bg-surface-elevated text-xs text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap max-h-40 overflow-y-auto leading-relaxed">
+                        {item.content}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Actions */}
+              {!selectMode && (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                  <button onClick={() => setExpanded(expanded === item.id ? null : item.id)}
+                    className="p-1.5 rounded-lg hover:bg-surface-elevated text-zinc-400 transition-all" title={expanded === item.id ? '收起' : '展开'}>
+                    {expanded === item.id ? <CaretUp size={12} weight="bold" /> : <CaretDown size={12} weight="bold" />}
+                  </button>
+                  <button onClick={() => handleCopy(item.id, item.content)}
+                    className="p-1.5 rounded-lg hover:bg-surface-elevated text-zinc-400 transition-all" title="复制">
+                    {copied === item.id ? <Check size={12} weight="bold" className="text-accent" /> : <CopySimple size={12} />}
+                  </button>
+                  <button onClick={() => handleCopy(item.id, item.content)}
+                    className="p-1.5 rounded-lg hover:bg-surface-elevated text-zinc-400 transition-all" title="复制 Markdown">
+                    <MarkdownLogo size={12} />
+                  </button>
+                  <button onClick={() => onSelect(item)}
+                    className="p-1.5 rounded-lg hover:bg-accent/10 text-zinc-400 hover:text-accent transition-all" title="重新使用">
+                    <ArrowCounterClockwise size={12} />
+                  </button>
+                  <button onClick={() => handleDelete(item.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-400 hover:text-red-500 transition-all" title="删除">
+                    <TrashSimple size={12} />
+                  </button>
                 </div>
               )}
             </div>
-            
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setExpanded(expanded === item.id ? null : item.id)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400"
-                title={expanded === item.id ? '收起' : '展开'}
-              >
-                {expanded === item.id ? '↑' : '↓'}
-              </button>
-              <button
-                onClick={() => handleCopy(item.id, item.content)}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400"
-                title="复制"
-              >
-                {copied === item.id ? '✓' : '📋'}
-              </button>
-              <button
-                onClick={() => onSelect(item)}
-                className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-500"
-                title="重新使用"
-              >
-                ↺
-              </button>
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors text-gray-400 hover:text-red-500"
-                title="删除"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

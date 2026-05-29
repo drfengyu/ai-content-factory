@@ -1,0 +1,67 @@
+[
+  {
+    "id": "deepseek",
+    "name": "DeepSeek",
+    "type": "openai",
+    "baseUrl": "https://api.deepseek.com",
+    "apiKeyEnv": "DEEPSEEK_API_KEY",
+    "defaultModel": "deepseek-v4-flash",
+    "models": ["deepseek-v4-flash", "deepseek-chat"],
+    "description": "DeepSeek 直连"
+  },
+  {
+    "id": "openrouter",
+    "name": "OpenRouter",
+    "type": "openai",
+    "baseUrl": "https://openrouter.ai",
+    "apiKeyEnv": "OPENROUTER_API_KEY",
+    "defaultModel": "deepseek/deepseek-v4-flash",
+    "models": ["deepseek/deepseek-v4-flash", "anthropic/claude-sonnet-4", "google/gemini-2.0-flash"],
+    "pathPrefix": "/api/v1",
+    "headers": {
+      "HTTP-Referer": "http://localhost:3000",
+      "X-Title": "AI Content Factory"
+    },
+    "description": "OpenRouter 聚合，可切换多种模型"
+  },
+  {
+    "id": "openai",
+    "name": "OpenAI",
+    "type": "openai",
+    "baseUrl": "https://api.openai.com",
+    "apiKeyEnv": "OPENAI_API_KEY",
+    "defaultModel": "gpt-4o-mini",
+    "models": ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
+    "description": "OpenAI 官方"
+  },
+  {
+    "id": "nous-newapi",
+    "name": "New API",
+    "type": "openai",
+    "baseUrl": "https://newapi.nousresearch.com",
+    "apiKeyEnv": "NOUS_NEWAPI_KEY",
+    "defaultModel": "deepseek-v4-flash",
+    "models": ["deepseek-v4-flash", "gpt-4o", "claude-sonnet-4"],
+    "description": "New API 聚合网关"
+  },
+  {
+    "id": "claude",
+    "name": "Claude (Anthropic)",
+    "type": "anthropic",
+    "baseUrl": "https://api.anthropic.com",
+    "apiKeyEnv": "ANTHROPIC_API_KEY",
+    "defaultModel": "claude-sonnet-4-20250514",
+    "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022"],
+    "description": "Anthropic Claude 直连"
+  },
+  {
+    "id": "gemini",
+    "name": "Gemini (Google)",
+    "type": "gemini",
+    "baseUrl": "https://generativelanguage.googleapis.com",
+    "apiKeyEnv": "GEMINI_API_KEY",
+    "defaultModel": "gemini-2.0-flash",
+    "models": ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-1.5-pro"],
+    "description": "Google Gemini 直连"
+  }
+]
