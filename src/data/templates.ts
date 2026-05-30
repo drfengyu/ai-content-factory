@@ -13,11 +13,55 @@ export interface Template {
 }
 
 export const TEMPLATES: Template[] = [
-  // ===== 小红书模板 =====
+  {
+    id: 'svc-content-pack',
+    name: 'AI 内容代写首单',
+    icon: 'package',
+    platform: 'service',
+    contentType: 'service_package',
+    topic: 'AI Content Factory：为小商家和自媒体提供小红书笔记、抖音脚本、公众号文章代写服务',
+    keywords: '本地餐饮店、咖啡店、美甲店、知识博主、想做账号但没时间的人',
+    tone: '专业',
+    description: '设计你能立刻售卖的 99/199/299 服务包',
+  },
+  {
+    id: 'svc-local-business',
+    name: '本地商家获客包',
+    icon: 'store',
+    platform: 'service',
+    contentType: 'service_package',
+    topic: '帮本地商家快速生成小红书探店文案、朋友圈促销文案、抖音短视频脚本',
+    keywords: '餐饮店、咖啡店、美甲美睫、健身房、民宿老板',
+    tone: '直接',
+    description: '适合从身边商家拿第一单',
+  },
+  {
+    id: 'svc-outreach',
+    name: '微信成交话术',
+    icon: 'chat',
+    platform: 'service',
+    contentType: 'client_outreach',
+    topic: '199元 AI 内容代写试单：交付3篇小红书笔记或3条短视频脚本',
+    keywords: '朋友圈熟人、本地小老板、小红书新手博主',
+    tone: '自然',
+    description: '生成今天就能发出去的获客内容',
+  },
+  {
+    id: 'svc-delivery',
+    name: '首单交付 SOP',
+    icon: 'target',
+    platform: 'service',
+    contentType: 'delivery_kit',
+    topic: '199元小红书内容代写服务：客户提供产品信息，我交付3篇可发布笔记',
+    keywords: '小商家、个人品牌、探店账号、知识博主',
+    tone: '专业',
+    description: '把第一单交付流程标准化，避免翻车',
+  },
+
   {
     id: 'xhs-beauty',
     name: '美妆种草',
-    icon: '💄',
+    icon: 'beauty',
     platform: 'xiaohongshu',
     contentType: 'xiaohongshu_copy',
     topic: '平价好用的国货彩妆推荐',
@@ -28,7 +72,7 @@ export const TEMPLATES: Template[] = [
   {
     id: 'xhs-skincare',
     name: '护肤分享',
-    icon: '🧴',
+    icon: 'skincare',
     platform: 'xiaohongshu',
     contentType: 'xiaohongshu_copy',
     topic: '敏感肌冬季护肤心得',
@@ -37,33 +81,9 @@ export const TEMPLATES: Template[] = [
     description: '适合护肤博主分享护肤心得',
   },
   {
-    id: 'xhs-travel',
-    name: '旅行攻略',
-    icon: '✈️',
-    platform: 'xiaohongshu',
-    contentType: 'xiaohongshu_copy',
-    topic: '周末短途旅行推荐',
-    keywords: '周末,短途,旅行,拍照,打卡',
-    tone: '活泼',
-    description: '适合旅行博主分享周末出游',
-  },
-  {
-    id: 'xhs-food',
-    name: '美食探店',
-    icon: '🍜',
-    platform: 'xiaohongshu',
-    contentType: 'xiaohongshu_copy',
-    topic: '隐藏在巷子里的宝藏小店',
-    keywords: '美食,探店,宝藏,好吃,推荐',
-    tone: '种草',
-    description: '适合美食博主探店分享',
-  },
-
-  // ===== 抖音模板 =====
-  {
     id: 'dy-knowledge',
     name: '知识分享',
-    icon: '📚',
+    icon: 'book',
     platform: 'douyin',
     contentType: 'douyin_script',
     topic: '3分钟学会一个实用技能',
@@ -74,7 +94,7 @@ export const TEMPLATES: Template[] = [
   {
     id: 'dy-life',
     name: '生活技巧',
-    icon: '💡',
+    icon: 'idea',
     platform: 'douyin',
     contentType: 'douyin_script',
     topic: '提升生活幸福感的小技巧',
@@ -83,33 +103,20 @@ export const TEMPLATES: Template[] = [
     description: '适合生活博主分享技巧',
   },
   {
-    id: 'dy-food',
-    name: '美食教程',
-    icon: '🍳',
-    platform: 'douyin',
-    contentType: 'douyin_script',
-    topic: '在家也能做的网红美食',
-    keywords: '美食,教程,简单,好吃,网红',
-    tone: '活泼',
-    description: '适合美食博主拍摄教程',
-  },
-
-  // ===== 公众号模板 =====
-  {
     id: 'gzh-industry',
     name: '行业分析',
-    icon: '📊',
+    icon: 'chart',
     platform: 'gongzhonghao',
     contentType: 'gongzhonghao_article',
-    topic: '2024年行业趋势分析',
-    keywords: '行业,趋势,分析,2024,展望',
+    topic: '2026年行业趋势分析',
+    keywords: '行业,趋势,分析,2026,展望',
     tone: '专业',
     description: '适合行业分析师撰写深度文章',
   },
   {
     id: 'gzh-career',
     name: '职场成长',
-    icon: '💼',
+    icon: 'career',
     platform: 'gongzhonghao',
     contentType: 'gongzhonghao_article',
     topic: '职场新人必看的生存指南',
@@ -117,20 +124,8 @@ export const TEMPLATES: Template[] = [
     tone: '干货',
     description: '适合职场博主分享经验',
   },
-  {
-    id: 'gzh-emotion',
-    name: '情感故事',
-    icon: '❤️',
-    platform: 'gongzhonghao',
-    contentType: 'gongzhonghao_article',
-    topic: '那些年我们错过的人和事',
-    keywords: '情感,故事,回忆,成长,感悟',
-    tone: '故事',
-    description: '适合情感博主撰写故事',
-  },
 ];
 
-// 按平台分组获取模板
 export function getTemplatesByPlatform(platform: Platform): Template[] {
   return TEMPLATES.filter(t => t.platform === platform);
 }

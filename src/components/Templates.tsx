@@ -5,6 +5,10 @@ import { motion } from 'motion/react';
 import { getTemplatesByPlatform, Template } from '@/data/templates';
 import { Platform } from '@/types';
 import {
+  Package,
+  Storefront,
+  ChatCircleText,
+  Target,
   Palette,
   Drop,
   Compass,
@@ -23,6 +27,10 @@ interface TemplatesProps {
 }
 
 const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
+  'svc-content-pack': <Package size={16} weight="duotone" />,
+  'svc-local-business': <Storefront size={16} weight="duotone" />,
+  'svc-outreach': <ChatCircleText size={16} weight="duotone" />,
+  'svc-delivery': <Target size={16} weight="duotone" />,
   'xhs-beauty': <Palette size={16} weight="duotone" />,
   'xhs-skincare': <Drop size={16} weight="duotone" />,
   'xhs-travel': <Compass size={16} weight="duotone" />,

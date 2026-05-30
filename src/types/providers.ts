@@ -44,3 +44,33 @@ export interface ActiveProviderState {
   providerId: string;
   model: string;
 }
+
+// ===== 用户自定义 Provider =====
+
+/** 用户在设置页自定义的 API Provider */
+export interface CustomProvider {
+  /** 唯一标识（自动生成 UUID） */
+  id: string;
+  /** 显示名称 */
+  name: string;
+  /** API 基础地址 */
+  baseUrl: string;
+  /** API Key */
+  apiKey: string;
+  /** 接口类型 */
+  type: 'openai' | 'anthropic' | 'gemini';
+  /** 可用模型列表（从接口获取或手动填写） */
+  models: string[];
+  /** 选中的默认模型 */
+  defaultModel: string;
+  /** 路径前缀（可选） */
+  pathPrefix?: string;
+  /** 创建时间 */
+  createdAt: string;
+}
+
+/** 设置页配置（localStorage 持久化） */
+export interface UserSettings {
+  customProviders: CustomProvider[];
+  // 后续可扩展：默认导出格式、主题等
+}

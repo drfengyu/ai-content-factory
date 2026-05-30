@@ -1,8 +1,11 @@
 // 平台类型
-export type Platform = 'xiaohongshu' | 'douyin' | 'gongzhonghao';
+export type Platform = 'service' | 'xiaohongshu' | 'douyin' | 'gongzhonghao';
 
 // 内容类型
 export type ContentType = 
+  | 'service_package'       // 首单服务包设计
+  | 'client_outreach'       // 获客成交话术
+  | 'delivery_kit'          // 标准交付工具包
   | 'xiaohongshu_title'      // 小红书标题
   | 'xiaohongshu_copy'       // 小红书种草文案
   | 'xiaohongshu_hashtag'    // 小红书话题标签
@@ -17,13 +20,21 @@ export interface GenerateRequest {
   contentType: ContentType;
   topic: string;
   keywords?: string;
-  tone?: '活泼' | '专业' | '种草' | '干货' | '故事';
-  length?: '短' | '中' | '长';
+  tone?: string;
+  length?: string;
   extraPrompt?: string;
   /** 可选：指定使用的 API Provider ID，不传则用 ACTIVE_PROVIDER 环境变量 */
   providerId?: string;
   /** 可选：指定模型名，不传则用 AI_MODEL 或 Provider 默认模型 */
   modelId?: string;
+  /** 自定义 Provider（用于用户界面添加的 Provider） */
+  customProvider?: {
+    baseUrl: string;
+    apiKey: string;
+    type: 'openai' | 'anthropic' | 'gemini';
+    model: string;
+    pathPrefix?: string;
+  };
 }
 
 // 生成响应
@@ -36,10 +47,14 @@ export interface GenerateResponse {
 // 用户
 export interface User {
   id: string;
+  name: string;
   email: string;
-  plan: 'free' | 'pro' | 'team';
+  role: string;
+  plan: 'starter' | 'pro' | 'studio';
   usage: number;  // 今日已用次数
   maxUsage: number;
+  usageDate: string;
+  createdAt: string;
 }
 
 // 模板

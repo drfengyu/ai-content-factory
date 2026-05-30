@@ -24,14 +24,14 @@ interface GenerateFormProps {
   loading: boolean;
 }
 
-const TONES = ['种草', '活泼', '专业', '干货', '故事'];
-const LENGTHS = ['短', '中', '长'];
+const TONES = ['自然', '直接', '专业', '克制', '成交'];
+const LENGTHS = ['轻量', '标准', '完整'];
 
 export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProps) {
   const [topic, setTopic] = useState('');
   const [keywords, setKeywords] = useState('');
-  const [tone, setTone] = useState('种草');
-  const [length, setLength] = useState('中');
+  const [tone, setTone] = useState('专业');
+  const [length, setLength] = useState('标准');
   const [extraPrompt, setExtraPrompt] = useState('');
 
   const handleTemplateSelect = (template: Template) => {
@@ -58,13 +58,13 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
       {/* Topic */}
       <div className="space-y-1.5">
         <label className="text-sm font-medium">
-          主题 / 产品名称 <span className="text-red-500">*</span>
+          项目能力 / 服务方向 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="夏日防晒霜推荐、Python学习心得"
+          placeholder="例：用 AI 帮商家生成小红书笔记、抖音脚本、公众号文章"
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                      focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
@@ -75,12 +75,12 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
 
       {/* Keywords */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">关键词</label>
+        <label className="text-sm font-medium">目标客户 / 已有资源</label>
         <input
           type="text"
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
-          placeholder="防晒、清爽、不假白"
+          placeholder="例：本地商家、朋友圈熟人、小红书新手博主"
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                      focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
@@ -91,7 +91,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
       {/* Tone + Length in a 2-col grid (taste-skill: grid over flex-math) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">语气风格</label>
+          <label className="text-sm font-medium">成交语气</label>
           <div className="flex flex-wrap gap-1.5">
             {TONES.map((t) => (
               <button
@@ -111,7 +111,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">内容长度</label>
+          <label className="text-sm font-medium">方案复杂度</label>
           <div className="flex gap-1.5">
             {LENGTHS.map((l) => (
               <button
@@ -137,7 +137,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
         <textarea
           value={extraPrompt}
           onChange={(e) => setExtraPrompt(e.target.value)}
-          placeholder="加入数据引用、使用第一人称、避免套话"
+          placeholder="例：第一单先卖 199 元、只通过微信成交、不要做支付系统"
           rows={3}
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
@@ -158,7 +158,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
         }`}
       >
         <MagicWand size={16} weight="fill" />
-        生成内容
+        生成首单方案
         <ArrowRight size={16} weight="bold" />
       </motion.button>
     </form>
