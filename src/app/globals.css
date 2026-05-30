@@ -15,16 +15,18 @@
 }
 
 :root {
-  color-scheme: dark;
-  --background: #09090b;
-  --foreground: #f7f8f8;
-  --accent: #38bdf8;
+  color-scheme: light;
+  /* Pure White & Warm White */
+  --background: #ffffff;
+  --foreground: rgba(0, 0, 0, 0.95);
+  --accent: #38bdf8; /* Electric Blue - retained */
   --accent-soft: rgba(56, 189, 248, 0.12);
-  --surface: #121216;
-  --surface-elevated: #1c1c22;
-  --surface-glass: rgba(18, 18, 22, 0.78);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --surface: #ffffff;
+  --surface-elevated: #f8fafc;
+  --surface-glass: rgba(255, 255, 255, 0.85);
+  /* Whisper borders - Notion style */
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
 }
 
 * {
@@ -44,31 +46,26 @@ body {
   font-feature-settings: "liga", "calt";
 }
 
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.18), transparent 28%),
-    radial-gradient(circle at 78% 0%, rgba(113, 112, 255, 0.16), transparent 30%),
-    radial-gradient(circle at 92% 72%, rgba(15, 118, 110, 0.14), transparent 34%),
-    linear-gradient(180deg, #09090b 0%, #0c0c10 42%, #09090b 100%);
+/* Soft Notion-style shadows for cards */
+.card-shadow {
+  box-shadow:
+    rgba(0, 0, 0, 0.04) 0px 4px 18px,
+    rgba(0, 0, 0, 0.027) 0px 2.025px 7.84688px,
+    rgba(0, 0, 0, 0.02) 0px 0.8px 2.925px,
+    rgba(0, 0, 0, 0.01) 0px 0.175px 1.04062px;
 }
 
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 0.42;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: linear-gradient(to bottom, black, transparent 72%);
+.deep-shadow {
+  box-shadow:
+    rgba(0, 0, 0, 0.01) 0px 1px 3px,
+    rgba(0, 0, 0, 0.02) 0px 3px 7px,
+    rgba(0, 0, 0, 0.02) 0px 7px 15px,
+    rgba(0, 0, 0, 0.04) 0px 14px 28px,
+    rgba(0, 0, 0, 0.05) 0px 23px 52px;
+}
+
+.pill {
+  border-radius: 9999px;
 }
 
 button, input, textarea, select {
@@ -84,56 +81,57 @@ button:disabled {
 }
 
 ::selection {
-  background: rgba(56, 189, 248, 0.32);
+  background: rgba(56, 189, 248, 0.25);
 }
 
+/* Commercial card style with whisper border and soft shadow */
 .commercial-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.025));
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
+  border-radius: 12px;
   box-shadow:
-    rgba(0,0,0,0.28) 0 24px 80px -42px,
-    rgba(255,255,255,0.04) 0 1px 0 inset;
+    rgba(0, 0, 0, 0.04) 0px 4px 18px,
+    rgba(0, 0, 0, 0.027) 0px 2px 8px;
+  transition: all 0.2s ease;
 }
 
-.shadow-border {
+.commercial-card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
   box-shadow:
-    rgba(255,255,255,0.08) 0 0 0 1px,
-    rgba(0,0,0,0.24) 0 20px 48px -28px;
+    rgba(0, 0, 0, 0.06) 0px 8px 24px,
+    rgba(0, 0, 0, 0.04) 0px 4px 12px,
+    rgba(56, 189, 248, 0.1) 0px 0px 0px 2px;
 }
 
-.gradient-text {
-  background: linear-gradient(135deg, #f7f8f8 0%, #d8f3ff 42%, #7dd3fc 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.hairline-grid {
-  background-image:
-    linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 32px 32px;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.skeleton {
+/* Hero gradient - inspired by Replicate but using our blue */
+.hero-gradient {
   background: linear-gradient(
-    90deg,
-    var(--surface-elevated) 25%,
-    rgba(255,255,255,0.08) 50%,
-    var(--surface-elevated) 75%
+    180deg,
+    rgba(56, 189, 248, 0.12) 0%,
+    rgba(56, 189, 248, 0.04) 40%,
+    rgba(255, 255, 255, 0) 100%
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: 0.75rem;
+}
+
+/* Warm alternate section */
+.section-alt {
+  background: #f6f5f4;
+}
+
+/* Typography helpers */
+.tight-heading {
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Focus ring for accessibility */
+.focus-ring:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
-  body::after {
-    background-size: 44px 44px;
+  .tight-heading {
+    letter-spacing: -0.01em;
   }
 }
