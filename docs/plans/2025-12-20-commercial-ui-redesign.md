@@ -273,7 +273,8 @@ git commit -m "chore: verify build and preview; commercial redesign integrated"
 - 已在 `CLAUDE.md` 增加“每次提交后同步 Markdown 文档”的项目约定。
 - 已修复用户档案的 `useSyncExternalStore` 快照缓存问题，避免创建档案后出现无限循环告警。
 - 已统一 `UserPanel` 到同一套用户 store，移除旧的挂载同步逻辑。
-- 待完成：重新运行 `npm run build`，并在本地浏览器完成 UI 预览确认。
+- 已重新运行 `npm run build`，构建成功。
+- 已在本地浏览器完成 UI 预览确认：首页可正常打开，商业化首屏、登录入口和控制台状态正常。
 
 ---
 

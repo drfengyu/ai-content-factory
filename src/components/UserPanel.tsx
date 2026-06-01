@@ -28,16 +28,19 @@ const PLAN_LABELS: Record<User['plan'], string> = {
   starter: '首单版',
   pro: '增长版',
   studio: '工作室版',
-  
 };
 
 export function UserPanel({ user, onUserChange }: UserPanelProps) {
-  const currentUser = useSyncExternalStore(subscribeCurrentUser, getCurrentUserSnapshot, getCurrentUserServerSnapshot);
+  const currentUser = useSyncExternalStore(
+    subscribeCurrentUser,
+    getCurrentUserSnapshot,
+    getCurrentUserServerSnapshot
+  );
   const activeUser = user ?? currentUser;
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('AI 鍐呭鏈嶅姟涓荤悊浜?);
+  const [role, setRole] = useState('AI 内容服务经理');
 
   const usagePercent = useMemo(() => {
     if (!activeUser) return 0;
@@ -96,7 +99,9 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
             <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
               <div>
                 <div className="text-sm font-semibold">用户系统</div>
-                <div className="text-[11px] text-zinc-500 dark:text-zinc-400">本地档案，先服务首单验证</div>
+                <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                  本地档案，先服务首单验证
+                </div>
               </div>
               <button
                 type="button"
@@ -152,16 +157,18 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
                   <label className="text-xs font-medium">你的称呼</label>
                   <input
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(event) => setName(event.target.value)}
                     placeholder="例如：内容服务经理"
                     className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/30"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">邮箱 / 联系方式 <span className="text-red-500">*</span></label>
+                  <label className="text-xs font-medium">
+                    邮箱 / 联系方式 <span className="text-red-500">*</span>
+                  </label>
                   <input
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(event) => setEmail(event.target.value)}
                     placeholder="用于本地档案展示"
                     className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/30"
                     required
@@ -171,7 +178,7 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
                   <label className="text-xs font-medium">身份定位</label>
                   <input
                     value={role}
-                    onChange={(e) => setRole(e.target.value)}
+                    onChange={(event) => setRole(event.target.value)}
                     placeholder="例如：AI 内容服务经理"
                     className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/30"
                   />
