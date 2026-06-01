@@ -1,20 +1,27 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PlatformSelector, ContentTypeSelector } from '@/components/PlatformSelector';
 import { GenerateForm } from '@/components/GenerateForm';
 import { ResultDisplay } from '@/components/ResultDisplay';
 import { HistoryList, saveToHistory, HistoryItem } from '@/components/HistoryList';
-import { incrementUserUsage, clearCurrentUser, loadCurrentUser, User } from '@/lib/user';
+import {
+  incrementUserUsage,
+  clearCurrentUser,
+  getCurrentUserServerSnapshot,
+  getCurrentUserSnapshot,
+  subscribeCurrentUser,
+} from '@/lib/user';
 import { Platform, ContentType } from '@/types';
-import { Sparkle, RocketLaunch, ClockCounterClockwise, Gear, SignOut, Menu, X } from '@phosphor-icons/react';
+import { Sparkle, SignOut, List, X, UsersThree, CurrencyCny, CheckCircle } from '@phosphor-icons/react';
 import { AuthModal } from '@/components/AuthModal';
 import { LandingPage } from '@/components/LandingPage';
 import { ProviderSwitch } from '@/components/ProviderSwitch';
 import { SettingsPanel } from '@/components/SettingsPanel';
 
 export default function Home() {
+  const user = useSyncExternalStore(subscribeCurrentUser, getCurrentUserSnapshot, getCurrentUserServerSnapshot);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [contentType, setContentType] = useState<ContentType | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,23 +30,15 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
   const [activeTab, setActiveTab] = useState<'generate' | 'history'>('generate');
-  const [user, setUser] = useState<User | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const loaded = loadCurrentUser();
-    setUser(loaded);
-  }, []);
-
-  const handleAuthSuccess = (newUser: User) => {
-    setUser(newUser);
+  const handleAuthSuccess = () => {
     setAuthOpen(false);
   };
 
   const handleLogout = () => {
     clearCurrentUser();
-    setUser(null);
   };
 
   const handleGenerate = async (params: {
@@ -96,7 +95,7 @@ export default function Home() {
           });
           setHistoryKey((k) => k + 1);
         }
-        setUser(incrementUserUsage());
+        incrementUserUsage();
         return;
       }
 
@@ -151,9 +150,7 @@ export default function Home() {
         });
         setHistoryKey((k) => k + 1);
       }
-      if (finalContent) {
-        setUser(incrementUserUsage());
-      }
+      if (finalContent) incrementUserUsage();
     } catch (err) {
       setError(err instanceof Error ? err.message : '网络错误，请重试');
     } finally {
@@ -207,7 +204,7 @@ export default function Home() {
             className="md:hidden p-2 text-zinc-400"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            {menuOpen ? <X size={24} /> : <List size={24} />}
           </button>
 
           {/* Desktop Nav */}

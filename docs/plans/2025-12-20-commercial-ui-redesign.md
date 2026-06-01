@@ -34,7 +34,7 @@ git commit -m "docs: add commercial UI redesign plan"
 
 ---
 
-### Task 2: 升级首页头部为商业网站式 Hero
+### Task 2: 升级首页头部为商业网站式 Hero（已完成）
 
 **Objective:** 把现有 header 改为 Vercel + Linear 风格的暗色 Hero 区：单列居中排版，big typography，清晰的价值主张与转化引导。
 
@@ -110,7 +110,7 @@ git commit -m "feat: update hero to commercial layout with value proposition and
 
 ---
 
-### Task 3: 实现“商品化服务包”独立入口卡片
+### Task 3: 实现“商品化服务包”独立入口卡片（已完成）
 
 **Objective:** 在首页首屏下方（或 tabs 上方）增加一个商业转化入口卡片，突出展示“服务包设计”与“定价”，参考 Stripe CTA 区块。
 
@@ -165,7 +165,7 @@ git commit -m "feat: add three commercial conversion cards on homepage"
 
 ---
 
-### Task 4: 新增设置/开发者模式入口（独立页面或侧边面板）
+### Task 4: 新增设置/开发者模式入口（已完成）
 
 **Objective:** 为用户提供一个显眼的“开发者模式”入口，展示 API Key 配置、Provider 状态与测试功能。不新建复杂路由，复用已有 `ProviderSwitch` 扩展，或添加一个「设置」模态框。
 
@@ -265,6 +265,15 @@ Run: `npm run dev &`（后台运行）
 git add .
 git commit -m "chore: verify build and preview; commercial redesign integrated"
 ```
+
+### 2026-06-01 进度更新
+
+- 已修复主页商业化工作台的类型导入、移动菜单图标、获客标签图标引用问题。
+- 已恢复 `README.md` 为可读中文，并同步当前功能、技术栈、Provider 与项目结构说明。
+- 已在 `CLAUDE.md` 增加“每次提交后同步 Markdown 文档”的项目约定。
+- 已修复用户档案的 `useSyncExternalStore` 快照缓存问题，避免创建档案后出现无限循环告警。
+- 已统一 `UserPanel` 到同一套用户 store，移除旧的挂载同步逻辑。
+- 待完成：重新运行 `npm run build`，并在本地浏览器完成 UI 预览确认。
 
 ---
 

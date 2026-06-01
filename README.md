@@ -1,6 +1,6 @@
 # AI Content Factory
 
-面向自媒体创作者的 AI 内容生成工具，支持小红书、抖音、公众号三大平台。项目内置多渠道 Provider 适配层，可切换 DeepSeek、OpenRouter、OpenAI、New API、Claude、Gemini 等接口。
+面向内容创作者的 AI 内容生成工具，支持小红书、抖音、公众号三大平台。项目内置多渠道 Provider 适配层，可切换 DeepSeek、OpenRouter、OpenAI、New API、Claude、Gemini 等接口。
 
 ## 功能
 
@@ -40,7 +40,7 @@ cp .env.example .env
 npm run dev
 ```
 
-打开 http://localhost:3000。
+打开 `http://localhost:3000`。
 
 ## 环境变量
 
@@ -57,7 +57,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # ANTHROPIC_API_KEY=your_anthropic_api_key_here
 # GEMINI_API_KEY=your_gemini_api_key_here
 
-# 当前激活 Provider 使用的模型名。不填时使用 providers.json 里的 defaultModel。
+# 当前激活 Provider 使用的模型名。不填时使用 providers.json 里的 defaultModel
 AI_MODEL=deepseek-v4-flash
 ```
 
@@ -69,7 +69,7 @@ src/
 │   ├── api/generate/route.ts   # AI 生成 API，多渠道适配
 │   ├── api/providers/route.ts  # Provider 列表 API
 │   ├── layout.tsx              # 根布局
-│   └── page.tsx                # 主页
+│   └── page.tsx                # 主页/商业化工作台
 ├── components/
 │   ├── GenerateForm.tsx        # 生成表单
 │   ├── HistoryList.tsx         # 本地历史记录
@@ -78,7 +78,7 @@ src/
 │   ├── ResultDisplay.tsx       # 结果展示和导出
 │   └── Templates.tsx           # 常用模板
 ├── data/
-│   ├── prompts/index.ts        # 提示词模板
+│   ├── prompts/index.ts        # 提示词模板和平台配置
 │   └── templates.ts            # 场景模板
 ├── lib/
 │   ├── providers.ts            # Provider 加载、请求构造

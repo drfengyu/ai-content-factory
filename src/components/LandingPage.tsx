@@ -1,17 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import {
   Sparkle,
   RocketLaunch,
   ShieldCheck,
-  Zap,
-  CurrencyCny,
+  Lightning,
   CheckCircle,
   ArrowRight,
-  Menu,
-  X,
 } from '@phosphor-icons/react';
 
 interface LandingPageProps {
@@ -20,7 +17,7 @@ interface LandingPageProps {
 
 const features = [
   {
-    icon: Zap,
+    icon: Lightning,
     title: '快速生成',
     description: '几秒钟生成高质量内容，支持多平台格式一键导出',
   },
@@ -66,8 +63,6 @@ const pricingPlans = [
 ];
 
 export function LandingPage({ onGetStarted }: LandingPageProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}

@@ -1,9 +1,15 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState, useSyncExternalStore } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { User } from '@/types';
-import { clearCurrentUser, createLocalUser, loadCurrentUser } from '@/lib/user';
+import {
+  clearCurrentUser,
+  createLocalUser,
+  getCurrentUserServerSnapshot,
+  getCurrentUserSnapshot,
+  subscribeCurrentUser,
+} from '@/lib/user';
 import {
   ArrowRight,
   CrownSimple,
@@ -22,22 +28,21 @@ const PLAN_LABELS: Record<User['plan'], string> = {
   starter: '首单版',
   pro: '增长版',
   studio: '工作室版',
+  
 };
 
 export function UserPanel({ user, onUserChange }: UserPanelProps) {
+  const currentUser = useSyncExternalStore(subscribeCurrentUser, getCurrentUserSnapshot, getCurrentUserServerSnapshot);
+  const activeUser = user ?? currentUser;
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('AI 内容服务主理人');
-
-  useEffect(() => {
-    onUserChange(loadCurrentUser());
-  }, [onUserChange]);
+  const [role, setRole] = useState('AI 鍐呭鏈嶅姟涓荤悊浜?);
 
   const usagePercent = useMemo(() => {
-    if (!user) return 0;
-    return Math.min(100, Math.round((user.usage / user.maxUsage) * 100));
-  }, [user]);
+    if (!activeUser) return 0;
+    return Math.min(100, Math.round((activeUser.usage / activeUser.maxUsage) * 100));
+  }, [activeUser]);
 
   const handleCreateUser = (event: React.FormEvent) => {
     event.preventDefault();
@@ -58,17 +63,17 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
       <motion.button
         type="button"
         whileTap={{ scale: 0.98 }}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
         className="flex items-center gap-2 rounded-xl border border-border-subtle bg-surface/90 px-3 py-2 text-xs text-zinc-500 shadow-sm transition-all hover:border-accent/40 hover:text-foreground dark:text-zinc-400"
       >
-        {user ? (
+        {activeUser ? (
           <>
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-accent">
               <UserCircle size={18} weight="fill" />
             </span>
             <span className="hidden text-left sm:block">
-              <span className="block text-[11px] text-zinc-400">{PLAN_LABELS[user.plan]}</span>
-              <span className="block max-w-28 truncate font-medium text-foreground">{user.name}</span>
+              <span className="block text-[11px] text-zinc-400">{PLAN_LABELS[activeUser.plan]}</span>
+              <span className="block max-w-28 truncate font-medium text-foreground">{activeUser.name}</span>
             </span>
           </>
         ) : (
@@ -103,21 +108,23 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
               </button>
             </div>
 
-            {user ? (
+            {activeUser ? (
               <div className="space-y-4 p-4">
                 <div className="rounded-xl border border-accent/20 bg-accent/5 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-base font-semibold">{user.name}</div>
-                      <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{user.email}</div>
+                      <div className="text-base font-semibold">{activeUser.name}</div>
+                      <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{activeUser.email}</div>
                       <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1 text-[11px] text-accent">
                         <CrownSimple size={13} weight="fill" />
-                        {PLAN_LABELS[user.plan]}
+                        {PLAN_LABELS[activeUser.plan]}
                       </div>
                     </div>
                     <div className="rounded-lg bg-surface px-2.5 py-1.5 text-right text-[11px] text-zinc-500 dark:text-zinc-400">
                       <div>今日生成</div>
-                      <div className="text-sm font-semibold text-foreground">{user.usage}/{user.maxUsage}</div>
+                      <div className="text-sm font-semibold text-foreground">
+                        {activeUser.usage}/{activeUser.maxUsage}
+                      </div>
                     </div>
                   </div>
 
@@ -127,21 +134,6 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
                       animate={{ width: `${usagePercent}%` }}
                       className="h-full rounded-full bg-accent"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-center text-[11px] text-zinc-500 dark:text-zinc-400">
-                  <div className="rounded-xl border border-border-subtle p-3">
-                    <div className="font-semibold text-foreground">20</div>
-                    <div>日额度</div>
-                  </div>
-                  <div className="rounded-xl border border-border-subtle p-3">
-                    <div className="font-semibold text-foreground">本地</div>
-                    <div>数据</div>
-                  </div>
-                  <div className="rounded-xl border border-border-subtle p-3">
-                    <div className="font-semibold text-foreground">可升级</div>
-                    <div>Auth</div>
                   </div>
                 </div>
 
@@ -161,7 +153,7 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="例：内容服务主理人"
+                    placeholder="例如：内容服务经理"
                     className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/30"
                   />
                 </div>
@@ -180,7 +172,7 @@ export function UserPanel({ user, onUserChange }: UserPanelProps) {
                   <input
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    placeholder="例：AI 内容服务主理人"
+                    placeholder="例如：AI 内容服务经理"
                     className="w-full rounded-xl border border-border-subtle bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-zinc-400 focus:border-accent focus:ring-2 focus:ring-accent/30"
                   />
                 </div>

@@ -1,6 +1,9 @@
 import type { User } from '@/types';
 
 const STORAGE_KEY = 'ai-content-factory-user';
+const listeners = new Set<() => void>();
+let cachedUserStorageValue: string | null = null;
+let cachedUserSnapshot: User | null = null;
 
 export type CreateUserInput = {
   name: string;
@@ -26,21 +29,69 @@ function normalizeUser(user: User): User {
   return user;
 }
 
-export function loadCurrentUser(): User | null {
+function notifyUserChange() {
+  listeners.forEach((listener) => listener());
+}
+
+function readCurrentUserSnapshot(): User | null {
   if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    return normalizeUser(JSON.parse(raw) as User);
-  } catch {
+
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw === cachedUserStorageValue) return cachedUserSnapshot;
+  if (!raw) {
+    cachedUserStorageValue = null;
+    cachedUserSnapshot = null;
     return null;
   }
+
+  try {
+    const normalized = normalizeUser(JSON.parse(raw) as User);
+    cachedUserStorageValue = raw;
+    cachedUserSnapshot = normalized;
+    return normalized;
+  } catch {
+    cachedUserStorageValue = null;
+    cachedUserSnapshot = null;
+    return null;
+  }
+}
+
+export function subscribeCurrentUser(listener: () => void) {
+  if (typeof window === 'undefined') return () => {};
+
+  listeners.add(listener);
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === STORAGE_KEY) listener();
+  };
+  window.addEventListener('storage', handleStorage);
+
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('storage', handleStorage);
+  };
+}
+
+export function getCurrentUserSnapshot(): User | null {
+  return readCurrentUserSnapshot();
+}
+
+export function getCurrentUserServerSnapshot(): User | null {
+  return null;
+}
+
+export function loadCurrentUser(): User | null {
+  return readCurrentUserSnapshot();
 }
 
 export function saveCurrentUser(user: User): User {
   const normalized = normalizeUser(user);
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+    const serialized = JSON.stringify(normalized);
+    localStorage.setItem(STORAGE_KEY, serialized);
+    cachedUserStorageValue = serialized;
+    cachedUserSnapshot = normalized;
+    notifyUserChange();
   }
   return normalized;
 }
@@ -63,6 +114,9 @@ export function createLocalUser(input: CreateUserInput): User {
 export function clearCurrentUser() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY);
+    cachedUserStorageValue = null;
+    cachedUserSnapshot = null;
+    notifyUserChange();
   }
 }
 

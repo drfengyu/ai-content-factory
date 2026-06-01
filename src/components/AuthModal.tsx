@@ -1,9 +1,15 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '@/types';
-import { clearCurrentUser, createLocalUser, loadCurrentUser } from '@/lib/user';
+import {
+  clearCurrentUser,
+  createLocalUser,
+  getCurrentUserServerSnapshot,
+  getCurrentUserSnapshot,
+  subscribeCurrentUser,
+} from '@/lib/user';
 import { X, ArrowRight, UserPlus, SignOut } from '@phosphor-icons/react';
 
 interface AuthModalProps {
@@ -13,17 +19,12 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
+  const currentUser = useSyncExternalStore(subscribeCurrentUser, getCurrentUserSnapshot, getCurrentUserServerSnapshot);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('AI 内容服务主理人');
   const [error, setError] = useState<string | null>(null);
-  const [existingUser, setExistingUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-      setExistingUser(loadCurrentUser());
-    }
-  }, [isOpen]);
+  const existingUser = isOpen ? currentUser : null;
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +40,6 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess }: AuthModalProps) {
 
   const handleLogout = () => {
     clearCurrentUser();
-    setExistingUser(null);
     onClose();
     // Refresh page to show landing
     window.location.reload();

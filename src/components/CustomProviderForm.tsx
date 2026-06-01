@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { X, Plus } from '@phosphor-icons/react';
+import { X } from '@phosphor-icons/react';
 import { addCustomProvider } from '@/lib/settings';
 import type { CustomProvider } from '@/types/providers';
 

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Gear, CheckCircle, WarningCircle, Wrench } from '@phosphor-icons/react';
+import { Gear, Wrench } from '@phosphor-icons/react';
 
 export function SettingsPanel() {
   const [open, setOpen] = useState(false);
