@@ -72,5 +72,24 @@ export interface CustomProvider {
 /** 设置页配置（localStorage 持久化） */
 export interface UserSettings {
   customProviders: CustomProvider[];
-  // 后续可扩展：默认导出格式、主题等
+  /** 生成偏好：作为 GenerateForm 的初始值 */
+  preferences?: GenerationPreferences;
+  /** 外观偏好 */
+  appearance?: AppearancePreferences;
+}
+
+/** 用户在设置面板里调整的生成默认值 */
+export interface GenerationPreferences {
+  /** 默认语气，对应 GenerateForm 的 TONES */
+  defaultTone?: string;
+  /** 默认复杂度，对应 GenerateForm 的 LENGTHS */
+  defaultLength?: string;
+  /** 默认导出格式 */
+  defaultExportFormat?: 'txt' | 'md' | 'html';
+}
+
+/** 外观偏好（v0.2.0 暂时只有占位，主题仍固定为深色） */
+export interface AppearancePreferences {
+  /** 主题模式，预留给后续亮色支持 */
+  theme?: 'dark' | 'system';
 }

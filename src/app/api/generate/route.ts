@@ -3,6 +3,7 @@ import { GenerateRequest } from '@/types';
 import { PROMPTS } from '@/data/prompts';
 import {
   resolveActiveProvider,
+  resolveCustomProvider,
   getActiveProviderId,
   clearProviderCache,
   loadProviders,
@@ -45,8 +46,16 @@ export async function POST(request: NextRequest) {
       extraPrompt: body.extraPrompt || '',
     });
 
-    // ===== 解析当前激活的 Provider（支持请求体内指定）=====
-    const resolved = resolveActiveProvider(body.providerId);
+    // ===== 解析当前激活的 Provider =====
+    // 优先级：请求体里的 customProvider（用户自定义）→ providerId（前端指定）→ 环境变量 ACTIVE_PROVIDER
+    let resolved = body.customProvider
+      ? resolveCustomProvider(body.customProvider)
+      : null;
+
+    if (!resolved) {
+      resolved = resolveActiveProvider(body.providerId);
+    }
+
     if (!resolved) {
       const activeId = getActiveProviderId();
       return Response.json(
@@ -59,7 +68,8 @@ export async function POST(request: NextRequest) {
     }
 
     const headers = buildHeaders(resolved);
-    const model = body.modelId || process.env.AI_MODEL || resolved.config.defaultModel;
+    // customProvider 自带 model；其他情况按 body.modelId → env → 配置默认值的顺序
+    const model = body.customProvider?.model || body.modelId || process.env.AI_MODEL || resolved.config.defaultModel;
 
     const response = await fetch(getChatEndpoint(resolved, model), {
       method: 'POST',

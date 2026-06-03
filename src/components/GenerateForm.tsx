@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import { motion } from 'motion/react';
 import { ContentType, Platform, Template } from '@/types';
 import { Templates } from './Templates';
@@ -8,45 +8,112 @@ import {
   ArrowRight,
   MagicWand,
 } from '@phosphor-icons/react';
+import {
+  getSettingsSnapshot,
+  getSettingsServerSnapshot,
+  subscribeSettings,
+} from '@/lib/settings';
+import { useDraft } from '@/hooks/useDraft';
 
 interface GenerateFormProps {
   platform: Platform | null;
   contentType: ContentType;
+  /**
+   * 生成回调。
+   * - 返回 true 表示生成成功，表单会清空当前 platform+contentType 的草稿。
+   * - 返回 false / 抛错时草稿保留，方便用户在错误恢复后直接重试。
+   */
   onGenerate: (params: {
     topic: string;
     keywords: string;
     tone: string;
     length: string;
     extraPrompt: string;
-  }) => void;
+  }) => Promise<boolean> | boolean | void;
   loading: boolean;
 }
 
 const TONES = ['自然', '直接', '专业', '克制', '活泼'];
 const LENGTHS = ['轻量', '标准', '完整'];
 
-export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProps) {
-  const [topic, setTopic] = useState('');
-  const [keywords, setKeywords] = useState('');
-  const [tone, setTone] = useState('专业');
-  const [length, setLength] = useState('标准');
-  const [extraPrompt, setExtraPrompt] = useState('');
+interface DraftShape {
+  topic: string;
+  keywords: string;
+  // tone / length 用 null 表示“未手动选过”，渲染时落到偏好默认值
+  tone: string | null;
+  length: string | null;
+  extraPrompt: string;
+}
+
+const EMPTY_DRAFT: DraftShape = {
+  topic: '',
+  keywords: '',
+  tone: null,
+  length: null,
+  extraPrompt: '',
+};
+
+// 平台标题字数软参考（仅供 UI 提示，不强制限制）
+const TOPIC_SOFT_HINTS: Partial<Record<Platform, { tip: string; soft: number }>> = {
+  xiaohongshu: { tip: '小红书标题建议 ≤ 20 字', soft: 20 },
+  douyin: { tip: '抖音口播单段建议 ≤ 50 字', soft: 50 },
+  gongzhonghao: { tip: '公众号主题建议 ≤ 30 字', soft: 30 },
+};
+
+export function GenerateForm({ platform, contentType, onGenerate, loading }: GenerateFormProps) {
+  // 直接订阅 settings 当前快照，作为表单字段的默认值
+  // 用户在表单里手动选过的字段会保留为局部 state；未交互的字段始终跟随偏好
+  const settings = useSyncExternalStore(
+    subscribeSettings,
+    getSettingsSnapshot,
+    getSettingsServerSnapshot,
+  );
+  const defaultTone = settings.preferences?.defaultTone ?? '专业';
+  const defaultLength = settings.preferences?.defaultLength ?? '标准';
+
+  // 草稿按 platform+contentType 维度命名空间存储，避免不同平台/类型互相覆盖
+  const draftKey = useMemo(
+    () => `acf:draft:${platform ?? 'none'}:${contentType ?? 'none'}`,
+    [platform, contentType],
+  );
+  const [draft, setDraft, clearDraft] = useDraft<DraftShape>(draftKey, EMPTY_DRAFT);
+
+  const effectiveTone = draft.tone ?? defaultTone;
+  const effectiveLength = draft.length ?? defaultLength;
 
   const handleTemplateSelect = (template: Template) => {
-    setTopic(template.topic);
-    setKeywords(template.keywords);
-    setTone(template.tone);
+    setDraft((d) => ({
+      ...d,
+      topic: template.topic,
+      keywords: template.keywords,
+      tone: template.tone,
+    }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!topic.trim()) return;
-    onGenerate({ topic, keywords, tone, length, extraPrompt });
+    if (!draft.topic.trim()) return;
+    const result = await onGenerate({
+      topic: draft.topic,
+      keywords: draft.keywords,
+      tone: effectiveTone,
+      length: effectiveLength,
+      extraPrompt: draft.extraPrompt,
+    });
+    // 只有明确返回 true 才视作成功并清空草稿；undefined / false 都保留草稿
+    if (result === true) {
+      clearDraft();
+      setDraft(EMPTY_DRAFT);
+    }
   };
 
   if (loading) {
     return <GenerateFormSkeleton />;
   }
+
+  const topicHint = platform ? TOPIC_SOFT_HINTS[platform] : null;
+  const topicLen = draft.topic.length;
+  const overSoft = topicHint ? topicLen > topicHint.soft : false;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -55,20 +122,41 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
 
       {/* Topic */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">
-          主题内容 <span className="text-red-500">*</span>
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">
+            主题内容 <span className="text-red-500">*</span>
+          </label>
+          {/* 字符计数 + 平台软提示 */}
+          <span
+            className={`text-xs tabular-nums ${
+              overSoft ? 'text-amber-400' : 'text-zinc-500'
+            }`}
+          >
+            {topicHint ? (
+              <>
+                {topicLen} / 建议 {topicHint.soft}
+              </>
+            ) : (
+              <>{topicLen} 字</>
+            )}
+          </span>
+        </div>
         <input
           type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="例：夏季护肤攻略、职场成长心得、美食探店分享"
+          value={draft.topic}
+          onChange={(e) => setDraft((d) => ({ ...d, topic: e.target.value }))}
+          placeholder="例:夏季护肤攻略、职场成长心得、美食探店分享"
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                      focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
                      transition-all"
           required
         />
+        {topicHint && (
+          <p className="text-[11px] text-zinc-500 leading-relaxed">
+            {topicHint.tip}（超过仅是软提示，不会阻止生成）
+          </p>
+        )}
       </div>
 
       {/* Keywords */}
@@ -76,9 +164,9 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
         <label className="text-sm font-medium">关键词 / 标签</label>
         <input
           type="text"
-          value={keywords}
-          onChange={(e) => setKeywords(e.target.value)}
-          placeholder="例：敏感肌、学生党、平价好物、干货分享"
+          value={draft.keywords}
+          onChange={(e) => setDraft((d) => ({ ...d, keywords: e.target.value }))}
+          placeholder="例:敏感肌、学生党、平价好物、干货分享"
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                      focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
@@ -95,9 +183,9 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
               <button
                 key={t}
                 type="button"
-                onClick={() => setTone(t)}
+                onClick={() => setDraft((d) => ({ ...d, tone: t }))}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
-                  tone === t
+                  effectiveTone === t
                     ? 'bg-accent text-white'
                     : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400 hover:text-foreground'
                 }`}
@@ -115,9 +203,9 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
               <button
                 key={l}
                 type="button"
-                onClick={() => setLength(l)}
+                onClick={() => setDraft((d) => ({ ...d, length: l }))}
                 className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-[0.97] ${
-                  length === l
+                  effectiveLength === l
                     ? 'bg-accent text-white'
                     : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400 hover:text-foreground'
                 }`}
@@ -133,9 +221,9 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
       <div className="space-y-1.5">
         <label className="text-sm font-medium">补充要求</label>
         <textarea
-          value={extraPrompt}
-          onChange={(e) => setExtraPrompt(e.target.value)}
-          placeholder="例：突出产品卖点、加入案例、用更贴近用户的口吻"
+          value={draft.extraPrompt}
+          onChange={(e) => setDraft((d) => ({ ...d, extraPrompt: e.target.value }))}
+          placeholder="例:突出产品卖点、加入案例、用更贴近用户的口吻"
           rows={3}
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
@@ -147,10 +235,10 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
       {/* Submit */}
       <motion.button
         type="submit"
-        disabled={!topic.trim()}
+        disabled={!draft.topic.trim()}
         whileTap={{ scale: 0.98 }}
         className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all ${
-          !topic.trim()
+          !draft.topic.trim()
             ? 'bg-surface-elevated text-zinc-400 dark:text-zinc-500 cursor-not-allowed'
             : 'bg-accent text-white hover:brightness-110 shadow-sm'
         }`}

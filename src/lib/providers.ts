@@ -50,6 +50,37 @@ export function clearProviderCache() {
 }
 
 /**
+ * 把请求体里携带的自定义 Provider 适配成 ResolvedProvider，
+ * 让后续 buildHeaders / buildRequestBody / getChatEndpoint 等工具可以直接复用。
+ */
+export function resolveCustomProvider(custom: {
+  baseUrl: string;
+  apiKey: string;
+  type: 'openai' | 'anthropic' | 'gemini';
+  model: string;
+  pathPrefix?: string;
+  name?: string;
+}): ResolvedProvider | null {
+  if (!custom.baseUrl || !custom.apiKey || !custom.model) return null;
+  const config: ProviderConfig = {
+    id: 'custom',
+    name: custom.name || 'Custom Provider',
+    type: custom.type,
+    baseUrl: custom.baseUrl,
+    // apiKeyEnv 仅供日志/调试，自定义 Provider 直接带 key 在请求里
+    apiKeyEnv: '__CUSTOM__',
+    defaultModel: custom.model,
+    models: [custom.model],
+    pathPrefix: custom.pathPrefix,
+  };
+  return {
+    config,
+    apiKey: custom.apiKey,
+    resolvedBaseUrl: resolveApiBase(config),
+  };
+}
+
+/**
  * 获取当前激活的 provider ID
  * 1. 环境变量 ACTIVE_PROVIDER
  * 2. 传入的默认 ID

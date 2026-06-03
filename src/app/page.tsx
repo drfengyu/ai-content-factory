@@ -26,11 +26,52 @@ import {
   ArrowsClockwise,
   Export,
   FunnelSimple,
+  CheckCircle,
+  ArrowClockwise,
+  WarningCircle,
 } from '@phosphor-icons/react';
 import { AuthModal } from '@/components/AuthModal';
 import { LandingPage } from '@/components/LandingPage';
 import { ProviderSwitch } from '@/components/ProviderSwitch';
 import { SettingsPanel } from '@/components/SettingsPanel';
+import { getCustomProviders } from '@/lib/settings';
+
+/** 生成失败时分类的错误信息,用于提示用户下一步该做什么 */
+interface GenerateError {
+  kind: 'timeout' | 'server' | 'config' | 'network' | 'unknown';
+  message: string;
+}
+
+/** 把 fetch / 业务层抛出的原始错误归类成上面 5 类之一 */
+function classifyError(err: unknown, status?: number): GenerateError {
+  if (err instanceof Error && err.name === 'AbortError') {
+    return { kind: 'timeout', message: '请求超时,可能是网络较慢或上游响应过慢' };
+  }
+  const raw = err instanceof Error ? err.message : String(err);
+  const lower = raw.toLowerCase();
+  if (status && status >= 500) {
+    return { kind: 'server', message: `服务端错误 (${status}):${raw}` };
+  }
+  if (
+    status === 401 ||
+    status === 403 ||
+    /api[\s_-]?key|unauthorized|forbidden|invalid.*provider|baseurl/i.test(raw)
+  ) {
+    return { kind: 'config', message: `Provider 配置可能有问题:${raw}` };
+  }
+  if (lower.includes('fetch') || lower.includes('network') || lower.includes('failed to')) {
+    return { kind: 'network', message: '网络异常,请检查连接后重试' };
+  }
+  return { kind: 'unknown', message: raw || '未知错误,请重试' };
+}
+
+type GenerateParams = {
+  topic: string;
+  keywords: string;
+  tone: string;
+  length: string;
+  extraPrompt: string;
+};
 
 export default function Home() {
   const user = useSyncExternalStore(subscribeCurrentUser, getCurrentUserSnapshot, getCurrentUserServerSnapshot);
@@ -39,11 +80,20 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [result, setResult] = useState<{ content: string; tokens: number; model: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<GenerateError | null>(null);
+  // 最近一次成功提交的参数,用于"重试"按钮 — 注意是参数而不是 result
+  const [lastParams, setLastParams] = useState<GenerateParams | null>(null);
+  // 流式生成完成统计;result 是非流式与流式都会设的,这里专门记录"流式是否刚结束"
+  const [streamStats, setStreamStats] = useState<{ chars: number; ms: number } | null>(null);
   const [historyKey, setHistoryKey] = useState(0);
   const [activeTab, setActiveTab] = useState<'generate' | 'history'>('generate');
   const [authOpen, setAuthOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // 当前激活的 Provider / 模型,用于把请求路由到正确的渠道(内置或自定义)
+  const [activeProvider, setActiveProvider] = useState<{ id: string; model: string | null }>({
+    id: '',
+    model: null,
+  });
 
   const handleAuthSuccess = () => {
     setAuthOpen(false);
@@ -53,34 +103,57 @@ export default function Home() {
     clearCurrentUser();
   };
 
-  const handleGenerate = async (params: {
-    topic: string;
-    keywords: string;
-    tone: string;
-    length: string;
-    extraPrompt: string;
-  }) => {
-    if (!contentType) return;
+  const handleGenerate = async (params: GenerateParams): Promise<boolean> => {
+    if (!contentType) return false;
 
     setLoading(true);
     setError(null);
     setResult(null);
     setStreamingContent('');
+    setStreamStats(null);
+    setLastParams(params);
+
+    const startedAt = performance.now();
 
     try {
+      // 判断当前 active 是否是用户自定义的 Provider
+      // 自定义 Provider 的 id 以 "custom-" 开头(addCustomProvider 生成规则)
+      let customProviderPayload: import('@/types').GenerateRequest['customProvider'];
+      if (activeProvider.id.startsWith('custom-')) {
+        const custom = getCustomProviders().find((p) => p.id === activeProvider.id);
+        if (custom) {
+          customProviderPayload = {
+            baseUrl: custom.baseUrl,
+            apiKey: custom.apiKey,
+            type: custom.type,
+            model: activeProvider.model || custom.defaultModel,
+            pathPrefix: custom.pathPrefix,
+          };
+        }
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           platform,
           contentType,
+          // 内置 Provider 通过 providerId/modelId 传,自定义 Provider 通过 customProvider 传
+          ...(customProviderPayload
+            ? { customProvider: customProviderPayload }
+            : {
+                providerId: activeProvider.id || undefined,
+                modelId: activeProvider.model || undefined,
+              }),
           ...params,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || '生成失败');
+        const err = new Error(data.error || '生成失败');
+        setError(classifyError(err, response.status));
+        return false;
       }
 
       const responseContentType = response.headers.get('content-type') || '';
@@ -89,7 +162,8 @@ export default function Home() {
         const data = await response.json();
         const finalContent = data.content || '';
         if (!finalContent) {
-          throw new Error('AI 未返回可用内容');
+          setError(classifyError(new Error('AI 未返回可用内容')));
+          return false;
         }
 
         setResult({
@@ -108,11 +182,14 @@ export default function Home() {
           setHistoryKey((k) => k + 1);
         }
         incrementUserUsage();
-        return;
+        return true;
       }
 
       const reader = response.body?.getReader();
-      if (!reader) throw new Error('无法读取响应流');
+      if (!reader) {
+        setError(classifyError(new Error('无法读取响应流')));
+        return false;
+      }
 
       const decoder = new TextDecoder();
       let fullContent = '';
@@ -146,12 +223,16 @@ export default function Home() {
       }
 
       const finalContent = fullContent;
+      const elapsedMs = Math.max(0, Math.round(performance.now() - startedAt));
       setResult({
         content: finalContent,
         tokens: 0,
         model: response.headers.get('X-Model') || 'unknown',
       });
       setStreamingContent('');
+      if (finalContent) {
+        setStreamStats({ chars: finalContent.length, ms: elapsedMs });
+      }
 
       if (finalContent && platform && contentType) {
         saveToHistory({
@@ -163,11 +244,19 @@ export default function Home() {
         setHistoryKey((k) => k + 1);
       }
       if (finalContent) incrementUserUsage();
+      return Boolean(finalContent);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '网络错误，请重试');
+      setError(classifyError(err));
+      return false;
     } finally {
       setLoading(false);
     }
+  };
+
+  /** 用最近一次提交的参数原样重发,用于"重试"按钮 */
+  const handleRetry = () => {
+    if (!lastParams || loading) return;
+    void handleGenerate(lastParams);
   };
 
   const handleSelectHistory = (item: HistoryItem) => {
@@ -233,17 +322,11 @@ export default function Home() {
             >
               历史
             </button>
-            <button
-              className="hover:text-accent transition-colors"
-              onClick={() => {} /* settings later */}
-            >
-              设置
-            </button>
           </nav>
 
           {/* User + Provider area */}
           <div className="flex items-center gap-3">
-            <ProviderSwitch />
+            <ProviderSwitch onProviderChange={(id, model) => setActiveProvider({ id, model })} />
             <SettingsPanel />
             <div className="hidden sm:flex flex-col text-right mr-2">
               <div className="text-sm font-medium text-foreground">{user.name}</div>
@@ -277,12 +360,6 @@ export default function Home() {
               className={`block w-full text-left py-2 ${activeTab === 'history' ? 'text-accent font-medium' : 'text-zinc-400 hover:text-foreground'}`}
             >
               历史
-            </button>
-            <button
-              onClick={() => { setMenuOpen(false); }}
-              className="block w-full text-left py-2 text-zinc-400 hover:text-foreground"
-            >
-              设置
             </button>
           </motion.div>
         )}
@@ -476,9 +553,44 @@ export default function Home() {
                       initial={{ opacity: 0, y: -8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      className="mt-6 p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm"
+                      className="mt-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-sm"
                     >
-                      {error}
+                      <div className="flex items-start gap-3">
+                        <WarningCircle size={20} weight="fill" className="text-red-400 mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-red-300">
+                            {error.kind === 'timeout' && '请求超时'}
+                            {error.kind === 'server' && '服务端错误'}
+                            {error.kind === 'config' && 'Provider 配置问题'}
+                            {error.kind === 'network' && '网络异常'}
+                            {error.kind === 'unknown' && '生成失败'}
+                          </div>
+                          <div className="mt-1 text-red-200/80 break-words">{error.message}</div>
+                          {error.kind === 'config' && (
+                            <div className="mt-1 text-xs text-red-200/60">
+                              建议:打开右上角设置面板,检查 API Key、baseUrl 是否正确,或切换其他 Provider。
+                            </div>
+                          )}
+                          <div className="mt-3 flex gap-2">
+                            {lastParams && (
+                              <button
+                                onClick={handleRetry}
+                                disabled={loading}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-medium hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+                              >
+                                <ArrowClockwise size={12} weight="bold" />
+                                重试
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setError(null)}
+                              className="px-3 py-1.5 rounded-lg border border-red-500/30 text-xs text-red-200 hover:bg-red-500/10 transition-all"
+                            >
+                              关闭
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -512,12 +624,21 @@ export default function Home() {
                     <motion.div
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mt-6"
+                      className="mt-6 space-y-3"
                     >
+                      {streamStats && (
+                        <div className="flex items-center gap-2 text-xs text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
+                          <CheckCircle size={14} weight="fill" className="text-emerald-400" />
+                          <span>
+                            生成完成 · 共 {streamStats.chars} 字 · {(streamStats.ms / 1000).toFixed(1)} 秒
+                          </span>
+                        </div>
+                      )}
                       <ResultDisplay
                         content={result.content}
                         tokens={result.tokens}
                         model={result.model}
+                        platform={platform}
                       />
                     </motion.div>
                   )}

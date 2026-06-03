@@ -59,10 +59,10 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-surface border border-border rounded-xl shadow-xl w-full max-w-md"
+        className="bg-surface border border-border-subtle rounded-xl shadow-xl w-full max-w-md"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-border">
+        <div className="flex items-center justify-between p-4 border-b border-border-subtle">
           <h2 className="font-semibold">添加自定义 Provider</h2>
           <button onClick={onClose} className="p-1 hover:bg-surface-elevated rounded">
             <X size={20} />
@@ -75,7 +75,7 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full p-2 rounded-lg bg-background border border-border focus:border-accent outline-none"
+              className="w-full p-2 rounded-lg bg-background border border-border-subtle focus:border-accent outline-none"
               placeholder="如 DeepSeek"
               required
             />
@@ -86,7 +86,7 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
               type="url"
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value)}
-              className="w-full p-2 rounded-lg bg-background border border-border focus:border-accent outline-none"
+              className="w-full p-2 rounded-lg bg-background border border-border-subtle focus:border-accent outline-none"
               placeholder="https://api.deepseek.com"
               required
             />
@@ -97,7 +97,7 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="w-full p-2 rounded-lg bg-background border border-border focus:border-accent outline-none"
+              className="w-full p-2 rounded-lg bg-background border border-border-subtle focus:border-accent outline-none"
               placeholder="sk-..."
               required
             />
@@ -107,7 +107,7 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
             <select
               value={type}
               onChange={(e) => setType(e.target.value as 'openai' | 'anthropic' | 'gemini')}
-              className="w-full p-2 rounded-lg bg-background border border-border focus:border-accent outline-none"
+              className="w-full p-2 rounded-lg bg-background border border-border-subtle focus:border-accent outline-none"
             >
               <option value="openai">OpenAI 兼容</option>
               <option value="anthropic">Anthropic</option>
@@ -120,7 +120,7 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
               type="text"
               value={models}
               onChange={(e) => setModels(e.target.value)}
-              className="w-full p-2 rounded-lg bg-background border border-border focus:border-accent outline-none"
+              className="w-full p-2 rounded-lg bg-background border border-border-subtle focus:border-accent outline-none"
               placeholder="deepseek-chat, deepseek-coder"
             />
           </div>
@@ -130,7 +130,7 @@ export default function CustomProviderForm({ isOpen, onClose, onAdded }: CustomP
               type="text"
               value={defaultModel}
               onChange={(e) => setDefaultModel(e.target.value)}
-              className="w-full p-2 rounded-lg bg-background border border-border focus:border-accent outline-none"
+              className="w-full p-2 rounded-lg bg-background border border-border-subtle focus:border-accent outline-none"
               placeholder="deepseek-chat"
               required
             />

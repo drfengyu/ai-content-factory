@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowsLeftRight, CaretDown, Check, WarningCircle } from '@phosphor-icons/react';
+import { getCustomProviders, subscribeSettings } from '@/lib/settings';
+import type { CustomProvider } from '@/types/providers';
 
 export interface ProviderInfo {
   id: string;
@@ -13,6 +15,8 @@ export interface ProviderInfo {
   configured: boolean;
   apiKeyEnv: string;
   description: string;
+  /** 是否为用户在前端添加的自定义 Provider */
+  isCustom?: boolean;
 }
 
 const PROVIDER_STORAGE_KEY = 'ai-content-factory-provider';
@@ -43,34 +47,59 @@ function resolveInitialModel(provider: ProviderInfo, preferredModel?: string): s
   return provider.defaultModel || provider.models[0] || '';
 }
 
+/** 把用户自定义 Provider 转换成统一 ProviderInfo 结构 */
+function customToProviderInfo(custom: CustomProvider): ProviderInfo {
+  return {
+    id: custom.id,
+    name: custom.name,
+    type: custom.type,
+    defaultModel: custom.defaultModel,
+    models: custom.models.length > 0 ? custom.models : [custom.defaultModel],
+    // 自定义 Provider 自带 API Key，视为已配置
+    configured: Boolean(custom.apiKey),
+    apiKeyEnv: '__CUSTOM__',
+    description: `${custom.type.toUpperCase()} · 自定义`,
+    isCustom: true,
+  };
+}
+
 interface ProviderSwitchProps {
   onProviderChange?: (providerId: string, modelId: string | null) => void;
 }
 
 export function ProviderSwitch({ onProviderChange }: ProviderSwitchProps) {
-  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [builtin, setBuiltin] = useState<ProviderInfo[]>([]);
+  const [custom, setCustom] = useState<ProviderInfo[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [activeModel, setActiveModel] = useState<string>('');
   const [open, setOpen] = useState(false);
   const onProviderChangeRef = useRef(onProviderChange);
 
+  const providers = [...builtin, ...custom];
+
   useEffect(() => {
     onProviderChangeRef.current = onProviderChange;
   }, [onProviderChange]);
 
+  // 拉取后端配置的 Provider
   useEffect(() => {
     fetch('/api/providers')
       .then((r) => r.json())
       .then((data) => {
         const providerList: ProviderInfo[] = data.providers || [];
-        setProviders(providerList);
+        setBuiltin(providerList);
+
+        // 把自定义 Provider 加入合并集，然后选定初始 active
+        const customList = getCustomProviders().map(customToProviderInfo);
+        setCustom(customList);
+        const combined = [...providerList, ...customList];
 
         // 优先使用 localStorage 存储的，其次用后端返回的 active
         const stored = getStoredProvider();
-        const initial = stored && providerList.find((p) => p.id === stored)
+        const initial = stored && combined.find((p) => p.id === stored)
           ? stored
-          : data.active || providerList[0]?.id || 'deepseek';
-        const initialProvider = providerList.find((p) => p.id === initial) || providerList[0];
+          : data.active || combined[0]?.id || 'deepseek';
+        const initialProvider = combined.find((p) => p.id === initial) || combined[0];
         const initialModel = initialProvider ? resolveInitialModel(initialProvider, data.activeModel) : '';
 
         setActiveId(initial);
@@ -80,6 +109,13 @@ export function ProviderSwitch({ onProviderChange }: ProviderSwitchProps) {
         }
       })
       .catch(() => {});
+  }, []);
+
+  // 订阅 settings 变化（添加/删除自定义 Provider 时实时刷新）
+  useEffect(() => {
+    return subscribeSettings(() => {
+      setCustom(getCustomProviders().map(customToProviderInfo));
+    });
   }, []);
 
   const active = providers.find((p) => p.id === activeId);
@@ -155,7 +191,9 @@ export function ProviderSwitch({ onProviderChange }: ProviderSwitchProps) {
                   }`}
                 >
                   {!active.configured && <WarningCircle size={10} weight="fill" />}
-                  {active.configured ? '已配置' : `缺 ${active.apiKeyEnv}`}
+                  {active.configured
+                    ? active.isCustom ? '自定义' : '已配置'
+                    : `缺 ${active.apiKeyEnv}`}
                 </span>
               )}
             </div>
@@ -183,7 +221,7 @@ export function ProviderSwitch({ onProviderChange }: ProviderSwitchProps) {
                         className={`ml-auto h-1.5 w-1.5 rounded-full ${
                           p.configured ? 'bg-emerald-500' : 'bg-amber-500'
                         }`}
-                        title={p.configured ? '已配置' : `缺少 ${p.apiKeyEnv}`}
+                        title={p.configured ? (p.isCustom ? '自定义 Provider' : '已配置') : `缺少 ${p.apiKeyEnv}`}
                       />
                     </div>
                     <p className="text-[11px] text-zinc-400 truncate mt-0.5">
