@@ -6,7 +6,6 @@ import { PLATFORMS, CONTENT_TYPES } from '@/data/prompts';
 import { Platform, ContentType } from '@/types';
 import {
   BookOpenText,
-  Briefcase,
   MusicNote,
   Newspaper,
   Sparkle,
@@ -16,9 +15,6 @@ import {
   Lightning,
   ListDashes,
   Article,
-  Target,
-  ChatCircleText,
-  Package,
 } from '@phosphor-icons/react';
 
 interface PlatformSelectorProps {
@@ -27,14 +23,12 @@ interface PlatformSelectorProps {
 }
 
 const PLATFORM_ICONS: Record<Platform, React.ReactNode> = {
-  service: <Briefcase size={28} weight="regular" />,
   xiaohongshu: <BookOpenText size={28} weight="regular" />,
   douyin: <MusicNote size={28} weight="regular" />,
   gongzhonghao: <Newspaper size={28} weight="regular" />,
 };
 
 const PLATFORM_ACCENTS: Record<Platform, string> = {
-  service: 'text-accent',
   xiaohongshu: 'text-rose-500',
   douyin: 'text-zinc-100',
   gongzhonghao: 'text-emerald-500',
@@ -83,9 +77,6 @@ export function PlatformSelector({ selected, onSelect }: PlatformSelectorProps) 
 }
 
 const TYPE_ICONS: Record<ContentType, React.ReactNode> = {
-  service_package: <Package size={20} weight="regular" />,
-  client_outreach: <ChatCircleText size={20} weight="regular" />,
-  delivery_kit: <Target size={20} weight="fill" />,
   xiaohongshu_title: <Sparkle size={20} weight="fill" />,
   xiaohongshu_copy: <FileText size={20} weight="regular" />,
   xiaohongshu_hashtag: <Tag size={20} weight="regular" />,

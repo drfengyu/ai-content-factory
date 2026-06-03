@@ -18,8 +18,8 @@ interface LandingPageProps {
 const features = [
   {
     icon: Lightning,
-    title: '快速生成',
-    description: '几秒钟生成高质量内容，支持多平台格式一键导出',
+    title: '多平台生成',
+    description: '围绕小红书、抖音、公众号三类场景，快速产出可直接发布的内容',
   },
   {
     icon: ShieldCheck,
@@ -28,36 +28,36 @@ const features = [
   },
   {
     icon: RocketLaunch,
-    title: '商业就绪',
-    description: '内置99/199/299三档服务包模板，快速变现',
+    title: '模板驱动',
+    description: '从常用模板快速开始，减少空白页和反复试探',
   },
   {
     icon: Sparkle,
-    title: 'AI原生',
-    description: '智能分析需求，自动优化内容，让AI为你工作',
+    title: '结果导向',
+    description: '兼顾标题、正文、脚本和标签，输出更接近发布状态的结果',
   },
 ];
 
 const pricingPlans = [
   {
-    name: '首单体验',
-    price: '99',
-    unit: '元/次',
-    features: ['5万字生成额度', '20张AI绘图', '基础模板', '本地数据存储'],
+    name: '基础工作台',
+    price: '3',
+    unit: '个核心平台',
+    features: ['小红书内容', '抖音脚本', '公众号文章', '本地数据存储'],
     popular: false,
   },
   {
-    name: '增长版',
-    price: '199',
-    unit: '元/月',
-    features: ['10万字额度', '40张AI绘图', '全部高级功能', '3个团队成员'],
+    name: '模板工作流',
+    price: '1',
+    unit: '次点击套用',
+    features: ['常用模板', '主题回填', '关键词补全', '语气切换'],
     popular: true,
   },
   {
-    name: '工作室',
-    price: '299',
-    unit: '元/月',
-    features: ['20万字额度', '80张AI绘图', '优先队列', '无限团队席位', '专属客服'],
+    name: '结果管理',
+    price: '2',
+    unit: '个导出方式',
+    features: ['历史记录', '结果展示', '文本导出', '本地留存'],
     popular: false,
   },
 ];
@@ -104,19 +104,19 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 tracking-tight leading-tight mb-6">
-              把 AI 内容能力
+              把内容生成能力
               <br className="hidden sm:block" />
-              包装成你的第一单服务收入
+              放进一个清晰的工作台
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-              先不做复杂 SaaS。用这个项目展示能力、生成交付内容、设计 99/199/299 服务包，通过微信完成第一笔成交。
+              这个项目聚焦真实的内容生产流程：平台选择、模板生成、历史记录和导出，方便快速产出小红书、抖音和公众号内容。
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <button
                 onClick={onGetStarted}
                 className="flex items-center gap-2 px-8 py-3.5 rounded-xl bg-accent text-white text-base font-semibold hover:bg-blue-600 transition-all shadow-sm hover:shadow-md active:scale-[0.98]"
               >
-                免费开始创作
+                进入工作台
                 <ArrowRight size={18} weight="bold" />
               </button>
               <a
@@ -134,9 +134,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">全场景 AI 应用</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">核心功能模块</h2>
             <p className="text-gray-600 max-w-xl mx-auto">
-              支持多种内容类型，一站式解决你的创作需求
+              以真实功能为中心，快速生成、套用模板、查看历史和导出结果
             </p>
           </div>
 
@@ -165,8 +165,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       <section id="pricing" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">灵活的定价</h2>
-            <p className="text-gray-600">选择适合你的服务包，开始AI内容创作之旅</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">工作流展示</h2>
+            <p className="text-gray-600">围绕实际使用场景，先看能力，再决定怎么用</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -185,7 +185,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-accent text-white text-xs font-semibold rounded-full">
-                    最受欢迎
+                    推荐
                   </div>
                 )}
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
@@ -209,7 +209,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                       : 'bg-gray-100 text-gray-900 hover:bg-accent hover:text-white'
                   }`}
                 >
-                  选择此方案
+                    查看详情
                 </button>
               </motion.div>
             ))}
@@ -221,16 +221,16 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       <section className="py-24 bg-accent/5">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
-            准备好开始你的AI内容服务了吗？
+            准备好开始生成内容了吗？
           </h2>
           <p className="text-gray-600 mb-10 text-lg">
-            立即注册，获得首单体验额度，开启商业化之路
+            直接进入工作台，选择平台和模板，开始生成你的第一版内容
           </p>
           <button
             onClick={onGetStarted}
             className="inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-accent text-white text-lg font-semibold hover:bg-blue-600 transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
           >
-            免费注册
+            进入工作台
             <ArrowRight size={20} weight="bold" />
           </button>
         </div>

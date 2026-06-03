@@ -1,6 +1,6 @@
 # AI Content Factory
 
-面向内容创作者的 AI 内容生成工具，支持小红书、抖音、公众号三大平台。项目内置多渠道 Provider 适配层，可切换 DeepSeek、OpenRouter、OpenAI、New API、Claude、Gemini 等接口。
+面向内容生产的 AI 工作台，支持小红书、抖音和公众号三类内容场景。项目内置多渠道 Provider 适配层，可切换 DeepSeek、OpenRouter、OpenAI、New API、Claude、Gemini 等接口。
 
 ## 功能
 
@@ -69,7 +69,7 @@ src/
 │   ├── api/generate/route.ts   # AI 生成 API，多渠道适配
 │   ├── api/providers/route.ts  # Provider 列表 API
 │   ├── layout.tsx              # 根布局
-│   └── page.tsx                # 主页/商业化工作台
+│   └── page.tsx                # 首页与工作台
 ├── components/
 │   ├── GenerateForm.tsx        # 生成表单
 │   ├── HistoryList.tsx         # 本地历史记录
@@ -90,7 +90,7 @@ src/
 
 ## Provider 适配
 
-`config/providers.json` 中的 `type` 决定请求路径、请求体和响应解析方式：
+`config/providers.json` 中的 `type` 决定请求格式和默认路径：
 
 | type | 请求格式 | 默认路径 |
 |------|----------|----------|
