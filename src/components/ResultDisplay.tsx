@@ -9,42 +9,13 @@ import {
   FileCode,
   MarkdownLogo,
 } from '@phosphor-icons/react';
+import { exportContent, ExportFormat } from '@/lib/export';
 
 interface ResultDisplayProps {
   content: string;
   tokens: number;
   model: string;
   topic?: string;
-}
-
-/** 将内容转为 HTML 片段 */
-function contentToHtml(text: string, title?: string): string {
-  const lines = text.split('\n').map((l) => {
-    const trimmed = l.trim();
-    if (!trimmed) return '<br>';
-    // 检测标题
-    if (/^#{1,6}\s/.test(trimmed)) {
-      const level = trimmed.match(/^(#+)/)![1].length;
-      return `<h${level}>${trimmed.replace(/^#+\s*/, '')}</h${level}>`;
-    }
-    // 检测加粗
-    const bolded = trimmed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    return `<p>${bolded}</p>`;
-  });
-  const titleHtml = title ? `<h1>${title}</h1>\n` : '';
-  return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head><meta charset="utf-8"><title>${title || 'AI生成内容'}</title>
-<style>
-body { max-width:720px; margin:40px auto; padding:0 20px; font:16px/1.7 -apple-system,sans-serif; color:#222; }
-h1 { font-size:24px; border-bottom:2px solid #eee; padding-bottom:8px; }
-h2 { font-size:20px; margin-top:28px; }
-h3 { font-size:17px; margin-top:22px; }
-p { margin:8px 0; }
-code { background:#f4f4f5; padding:2px 6px; border-radius:4px; font-size:14px; }
-pre { background:#f4f4f5; padding:16px; border-radius:8px; overflow-x:auto; }
-</style></head>
-<body>${titleHtml}${lines.join('\n')}</body></html>`;
 }
 
 export function ResultDisplay({ content, tokens, model, topic }: ResultDisplayProps) {
@@ -56,32 +27,8 @@ export function ResultDisplay({ content, tokens, model, topic }: ResultDisplayPr
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadFile = (blob: Blob, ext: string) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${topic ? topic.slice(0, 20) : 'content'}-${Date.now()}.${ext}`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleDownload = (format: 'txt' | 'md' | 'html') => {
-    let blob: Blob;
-    let ext: string;
-    switch (format) {
-      case 'md':
-        blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-        ext = 'md';
-        break;
-      case 'html':
-        blob = new Blob([contentToHtml(content, topic)], { type: 'text/html;charset=utf-8' });
-        ext = 'html';
-        break;
-      default:
-        blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-        ext = 'txt';
-    }
-    downloadFile(blob, ext);
+  const handleDownload = (format: ExportFormat) => {
+    exportContent(content, format, topic || 'content');
   };
 
   if (!content) return null;

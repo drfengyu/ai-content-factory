@@ -19,6 +19,7 @@ import {
   SelectionPlus,
   SelectionSlash,
 } from '@phosphor-icons/react';
+import { downloadBlob, markdownToHtmlDocument } from '@/lib/export';
 
 export interface HistoryItem {
   id: string;
@@ -86,35 +87,15 @@ const CONTENT_TYPE_NAMES: Record<string, string> = {
   gongzhonghao_outline: '文章大纲', gongzhonghao_article: '完整文章',
 };
 
-/** 将内容导出为 HTML */
-function contentToHtml(text: string, title: string): string {
-  const lines = text.split('\n').map(l => {
-    const t = l.trim();
-    if (!t) return '<br>';
-    if (/^#{1,6}\s/.test(t)) {
-      const level = t.match(/^(#+)/)![1].length;
-      return `<h${level}>${t.replace(/^#+\s*/, '')}</h${level}>`;
-    }
-    return `<p>${t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</p>`;
-  });
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>${title}</title>
-<style>body{max-width:720px;margin:40px auto;padding:0 20px;font:16px/1.7 -apple-system,sans-serif;color:#222;}
-h1{font-size:24px;border-bottom:2px solid #eee;padding-bottom:8px;}
-h2{font-size:20px;margin-top:28px;}p{margin:8px 0;}
-code{background:#f4f4f5;padding:2px 6px;border-radius:4px;font-size:14px;}
-pre{background:#f4f4f5;padding:16px;border-radius:8px;overflow-x:auto;}</style></head>
-<body>${lines.join('\n')}</body></html>`;
-}
-
-/** 导出文件 */
-function downloadFile(content: string, filename: string, mime: string, ext: string) {
-  const blob = new Blob([content], { type: `${mime};charset=utf-8` });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}.${ext}`;
-  a.click();
-  URL.revokeObjectURL(url);
+/** 批量导出：把多条历史拼成 Markdown，再按格式包装 */
+function buildBatchMarkdown(items: HistoryItem[]): string {
+  return items
+    .map((i) => {
+      const platform = PLATFORM_CONFIG[i.platform]?.label || i.platform;
+      const type = CONTENT_TYPE_NAMES[i.contentType] || i.contentType;
+      return `## ${platform} · ${type}：${i.topic}\n\n${i.content}\n\n---\n`;
+    })
+    .join('\n');
 }
 
 interface HistoryListProps {
@@ -189,17 +170,17 @@ export function HistoryList({ onSelect, fullView }: HistoryListProps) {
   const handleBatchExport = (format: 'txt' | 'md' | 'html') => {
     const items = history.filter((i) => selectedIds.has(i.id));
     if (items.length === 0) return;
-    const combined = items
-      .map((i) => {
-        const platform = PLATFORM_CONFIG[i.platform]?.label || i.platform;
-        const type = CONTENT_TYPE_NAMES[i.contentType] || i.contentType;
-        const header = format === 'html' ? `<h2>${platform} · ${type}：${i.topic}</h2>` : `## ${platform} · ${type}：${i.topic}\n`;
-        const body = format === 'html' ? contentToHtml(i.content, `${i.topic}`) : i.content;
-        return format === 'html' ? header + body : `${header}\n${body}\n---\n`;
-      })
-      .join('\n');
-    const mime = format === 'html' ? 'text/html' : format === 'md' ? 'text/markdown' : 'text/plain';
-    downloadFile(format === 'html' ? contentToHtml(combined, `历史记录导出 ${new Date().toLocaleDateString()}`) : combined, `历史记录-${Date.now()}`, mime, format);
+    const stamp = Date.now();
+    const baseName = `历史记录-${stamp}`;
+    if (format === 'html') {
+      const title = `历史记录导出 ${new Date().toLocaleDateString()}`;
+      const html = markdownToHtmlDocument(buildBatchMarkdown(items), title);
+      downloadBlob(html, `${baseName}.html`, 'text/html');
+      return;
+    }
+    const markdown = buildBatchMarkdown(items);
+    const mime = format === 'md' ? 'text/markdown' : 'text/plain';
+    downloadBlob(markdown, `${baseName}.${format}`, mime);
   };
 
   if (history.length === 0) {

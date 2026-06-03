@@ -1,11 +1,8 @@
 // 平台类型
-export type Platform = 'service' | 'xiaohongshu' | 'douyin' | 'gongzhonghao';
+export type Platform = 'xiaohongshu' | 'douyin' | 'gongzhonghao';
 
 // 内容类型
 export type ContentType = 
-  | 'service_package'       // 首单服务包设计
-  | 'client_outreach'       // 获客成交话术
-  | 'delivery_kit'          // 标准交付工具包
   | 'xiaohongshu_title'      // 小红书标题
   | 'xiaohongshu_copy'       // 小红书种草文案
   | 'xiaohongshu_hashtag'    // 小红书话题标签
@@ -63,7 +60,13 @@ export interface Template {
   name: string;
   platform: Platform;
   contentType: ContentType;
-  icon: string;
+  topic: string;
+  keywords: string;
+  tone: string;
   description: string;
-  placeholders: string[];  // 需要用户填写的字段
+  /** 可选分类，用于 Templates UI 的横向 Tab 筛选 */
+  category?: TemplateCategory;
 }
+
+// 模板分类
+export type TemplateCategory = 'planting' | 'knowledge' | 'story' | 'review';

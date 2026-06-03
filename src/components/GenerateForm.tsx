@@ -2,10 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ContentType } from '@/types';
+import { ContentType, Platform, Template } from '@/types';
 import { Templates } from './Templates';
-import { Template } from '@/data/templates';
-import { Platform } from '@/types';
 import {
   ArrowRight,
   MagicWand,
@@ -24,7 +22,7 @@ interface GenerateFormProps {
   loading: boolean;
 }
 
-const TONES = ['自然', '直接', '专业', '克制', '成交'];
+const TONES = ['自然', '直接', '专业', '克制', '活泼'];
 const LENGTHS = ['轻量', '标准', '完整'];
 
 export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProps) {
@@ -58,13 +56,13 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
       {/* Topic */}
       <div className="space-y-1.5">
         <label className="text-sm font-medium">
-          项目能力 / 服务方向 <span className="text-red-500">*</span>
+          主题内容 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
-          placeholder="例：用 AI 帮商家生成小红书笔记、抖音脚本、公众号文章"
+          placeholder="例：夏季护肤攻略、职场成长心得、美食探店分享"
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                      focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
@@ -75,12 +73,12 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
 
       {/* Keywords */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium">目标客户 / 已有资源</label>
+        <label className="text-sm font-medium">关键词 / 标签</label>
         <input
           type="text"
           value={keywords}
           onChange={(e) => setKeywords(e.target.value)}
-          placeholder="例：本地商家、朋友圈熟人、小红书新手博主"
+          placeholder="例：敏感肌、学生党、平价好物、干货分享"
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                      focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent
@@ -91,7 +89,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
       {/* Tone + Length in a 2-col grid (taste-skill: grid over flex-math) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">成交语气</label>
+          <label className="text-sm font-medium">文案语气</label>
           <div className="flex flex-wrap gap-1.5">
             {TONES.map((t) => (
               <button
@@ -137,7 +135,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
         <textarea
           value={extraPrompt}
           onChange={(e) => setExtraPrompt(e.target.value)}
-          placeholder="例：第一单先卖 199 元、只通过微信成交、不要做支付系统"
+          placeholder="例：突出产品卖点、加入案例、用更贴近用户的口吻"
           rows={3}
           className="w-full px-4 py-2.5 rounded-xl border border-border-subtle bg-background
                      text-sm text-foreground placeholder:text-zinc-400 dark:placeholder:text-zinc-500
@@ -158,7 +156,7 @@ export function GenerateForm({ platform, onGenerate, loading }: GenerateFormProp
         }`}
       >
         <MagicWand size={16} weight="fill" />
-        生成首单方案
+        生成内容
         <ArrowRight size={16} weight="bold" />
       </motion.button>
     </form>

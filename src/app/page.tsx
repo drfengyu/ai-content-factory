@@ -14,7 +14,19 @@ import {
   subscribeCurrentUser,
 } from '@/lib/user';
 import { Platform, ContentType } from '@/types';
-import { Sparkle, SignOut, List, X, UsersThree, CurrencyCny, CheckCircle } from '@phosphor-icons/react';
+import {
+  Sparkle,
+  SignOut,
+  List,
+  X,
+  BookOpenText,
+  MusicNote,
+  Newspaper,
+  ClockCounterClockwise,
+  ArrowsClockwise,
+  Export,
+  FunnelSimple,
+} from '@phosphor-icons/react';
 import { AuthModal } from '@/components/AuthModal';
 import { LandingPage } from '@/components/LandingPage';
 import { ProviderSwitch } from '@/components/ProviderSwitch';
@@ -252,23 +264,23 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="md:hidden border-t border-gray-200 bg-white px-6 py-4 space-y-3"
+            className="md:hidden border-t border-border-subtle bg-surface px-6 py-4 space-y-3"
           >
             <button
               onClick={() => { setActiveTab('generate'); setMenuOpen(false); }}
-              className={`block w-full text-left py-2 ${activeTab === 'generate' ? 'text-accent font-medium' : 'text-gray-600'}`}
+              className={`block w-full text-left py-2 ${activeTab === 'generate' ? 'text-accent font-medium' : 'text-zinc-400 hover:text-foreground'}`}
             >
               生成
             </button>
             <button
               onClick={() => { setActiveTab('history'); setMenuOpen(false); }}
-              className={`block w-full text-left py-2 ${activeTab === 'history' ? 'text-accent font-medium' : 'text-gray-600'}`}
+              className={`block w-full text-left py-2 ${activeTab === 'history' ? 'text-accent font-medium' : 'text-zinc-400 hover:text-foreground'}`}
             >
               历史
             </button>
             <button
               onClick={() => { setMenuOpen(false); }}
-              className="block w-full text-left py-2 text-gray-600"
+              className="block w-full text-left py-2 text-zinc-400 hover:text-foreground"
             >
               设置
             </button>
@@ -288,7 +300,7 @@ export default function Home() {
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="max-w-6xl mx-auto px-6">
-                {/* Commercial Hero */}
+                {/* Product Hero */}
                 <section className="py-16 border-b border-border-subtle">
                   <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-10 items-end">
                     <div className="text-left">
@@ -298,52 +310,107 @@ export default function Home() {
                       <div className="mt-5">
                         <p className="text-xs font-semibold tracking-[0.24em] text-accent uppercase">AI Content Factory</p>
                         <h1 className="mt-3 text-3xl sm:text-5xl font-bold tracking-tight leading-tight">
-                          把 AI 内容能力包装成<br className="hidden sm:block" />你的第一单服务收入
+                          把内容生成、模板填充和历史管理<br className="hidden sm:block" />集中到一个工作台里
                         </h1>
                         <p className="mt-4 text-sm sm:text-base text-zinc-400 max-w-xl leading-relaxed">
-                          参考头部网站的转化架构：先展示能力，再引导生成服务包、获客话术与交付工具。不做复杂支付，首单通过微信完成。
+                          首页聚焦本项目的实际模块功能：平台选择、模板生成、历史记录、结果展示和导出能力，让内容工作流更顺手。
                         </p>
                       </div>
                       <div className="mt-6 flex flex-wrap gap-2 text-xs text-zinc-400">
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5"><CurrencyCny size={14} className="text-accent" /> 首单 99-299 元</span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5"><UsersThree size={14} className="text-accent" /> 熟人/本地商家获客</span>
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5"><CheckCircle size={14} className="text-accent" /> 当天可交付</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5"><BookOpenText size={14} className="text-accent" /> 小红书内容</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5"><MusicNote size={14} className="text-accent" /> 抖音脚本</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-3 py-1.5"><Newspaper size={14} className="text-accent" /> 公众号文章</span>
                       </div>
                     </div>
                     <div className="rounded-xl border border-accent/20 bg-surface/80 p-5 shadow-2xl shadow-accent/5">
-                      <div className="text-sm font-semibold">首单路径</div>
+                      <div className="text-sm font-semibold">工作台功能</div>
                       <div className="mt-4 space-y-3 text-sm text-zinc-400">
-                        <div className="flex gap-3"><span className="text-accent font-semibold">01</span><span>生成可卖服务包和报价</span></div>
-                        <div className="flex gap-3"><span className="text-accent font-semibold">02</span><span>复制微信/朋友圈获客话术</span></div>
-                        <div className="flex gap-3"><span className="text-accent font-semibold">03</span><span>用内容工厂完成客户交付</span></div>
+                        <div className="flex gap-3"><span className="text-accent font-semibold">01</span><span>选择平台和内容类型</span></div>
+                        <div className="flex gap-3"><span className="text-accent font-semibold">02</span><span>套用模板并补全主题、关键词和语气</span></div>
+                        <div className="flex gap-3"><span className="text-accent font-semibold">03</span><span>查看结果、进入历史并导出内容</span></div>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* Value Cards */}
+                {/* Module Cards */}
                 <section className="py-10">
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="commercial-card rounded-xl p-5">
-                      <div className="text-accent text-sm font-semibold mb-2">首单变现</div>
-                      <h3 className="text-lg font-semibold mb-2">设计 99/199/299 套餐</h3>
+                      <div className="text-accent text-sm font-semibold mb-2">平台选择</div>
+                      <h3 className="text-lg font-semibold mb-2">小红书 / 抖音 / 公众号</h3>
                       <p className="text-zinc-400 text-sm leading-relaxed">
-                        产出落地页文案、服务详情、交付规则与卖点提炼，直接复制发朋友圈。
+                        从三类核心平台开始，按不同内容场景生成标题、文案、脚本和大纲。
                       </p>
                     </div>
                     <div className="commercial-card rounded-xl p-5">
-                      <div className="text-accent text-sm font-semibold mb-2">微信成交</div>
-                      <h3 className="text-lg font-semibold mb-2">生成获客与跟进话术</h3>
+                      <div className="text-accent text-sm font-semibold mb-2">模板系统</div>
+                      <h3 className="text-lg font-semibold mb-2">一键套用常用模板</h3>
                       <p className="text-zinc-400 text-sm leading-relaxed">
-                        微信私信、朋友圈预热、低压力跟进、转介绍文案；全套即用。
+                        用主题、关键词和语气快速填充模板，减少重复输入和空白页。
                       </p>
                     </div>
                     <div className="commercial-card rounded-xl p-5">
-                      <div className="text-accent text-sm font-semibold mb-2">交付保障</div>
-                      <h3 className="text-lg font-semibold mb-2">标准交付工具包</h3>
+                      <div className="text-accent text-sm font-semibold mb-2">结果管理</div>
+                      <h3 className="text-lg font-semibold mb-2">历史记录与导出</h3>
                       <p className="text-zinc-400 text-sm leading-relaxed">
-                        客户信息收集表、SOP、验收话术与复购建议，确保首单不翻车。
+                        结果可回看、可复用、可导出为文本内容，方便整理和后续修改。
                       </p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="py-8">
+                  <div className="grid lg:grid-cols-[0.85fr_1.15fr] gap-4">
+                    <div className="rounded-2xl border border-border-subtle bg-surface p-5 shadow-sm">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                        <FunnelSimple size={16} className="text-accent" />
+                        真实模块
+                      </div>
+                      <div className="mt-4 space-y-4 text-sm text-zinc-400">
+                        <div className="flex items-start gap-3">
+                          <ClockCounterClockwise size={18} className="mt-0.5 text-accent" />
+                          <div>
+                            <div className="font-medium text-foreground">历史列表</div>
+                            <div className="mt-1">查看最近生成内容，继续编辑或重新载入。</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <ArrowsClockwise size={18} className="mt-0.5 text-accent" />
+                          <div>
+                            <div className="font-medium text-foreground">模板回填</div>
+                            <div className="mt-1">从快捷模板直接填充主题、关键词和语气。</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <Export size={18} className="mt-0.5 text-accent" />
+                          <div>
+                            <div className="font-medium text-foreground">结果导出</div>
+                            <div className="mt-1">将内容复制或导出，进入后续编辑流程。</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-border-subtle bg-surface/80 p-5 shadow-sm">
+                      <div className="text-sm font-semibold text-foreground">推荐使用路径</div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-xl border border-border-subtle bg-background p-4">
+                          <div className="text-xs font-semibold text-accent">01</div>
+                          <div className="mt-2 text-sm font-medium">先选平台</div>
+                          <p className="mt-1 text-xs text-zinc-500">选择小红书、抖音或公众号。</p>
+                        </div>
+                        <div className="rounded-xl border border-border-subtle bg-background p-4">
+                          <div className="text-xs font-semibold text-accent">02</div>
+                          <div className="mt-2 text-sm font-medium">套模板</div>
+                          <p className="mt-1 text-xs text-zinc-500">用模板快速生成初稿。</p>
+                        </div>
+                        <div className="rounded-xl border border-border-subtle bg-background p-4">
+                          <div className="text-xs font-semibold text-accent">03</div>
+                          <div className="mt-2 text-sm font-medium">看历史与导出</div>
+                          <p className="mt-1 text-xs text-zinc-500">回看结果并导出到本地。</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </section>
@@ -390,7 +457,7 @@ export default function Home() {
                       exit={{ opacity: 0, y: -12 }}
                       transition={{ duration: 0.3, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                      <div className="mt-6 rounded-2xl border border-border-subtle bg-surface p-6 shadow-sm">
                         <GenerateForm
                           platform={platform}
                           contentType={contentType}
@@ -422,16 +489,16 @@ export default function Home() {
                     <motion.div
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mt-6 p-6 rounded-2xl border border-gray-200 bg-white shadow-sm"
+                      className="mt-6 p-6 rounded-2xl border border-border-subtle bg-surface shadow-sm"
                     >
                       <div className="flex items-center gap-2 mb-4">
                         <span className="relative flex h-2.5 w-2.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
                           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent" />
                         </span>
-                        <span className="text-sm text-gray-500">AI 正在生成</span>
+                        <span className="text-sm text-zinc-400">AI 正在生成</span>
                       </div>
-                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                         {streamingContent}
                         <span className="inline-block w-[2px] h-[1em] bg-accent ml-0.5 animate-pulse align-middle" />
                       </div>
@@ -457,7 +524,7 @@ export default function Home() {
                 </AnimatePresence>
 
                 {/* History Section */}
-                <section className="mt-12 pt-8 border-t border-gray-200">
+                <section className="mt-12 pt-8 border-t border-border-subtle">
                   <HistoryList
                     key={historyKey}
                     onSelect={handleSelectHistory}
@@ -486,8 +553,8 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-50 border-t border-gray-200 py-8">
-        <div className="max-w-6xl mx-auto px-6 text-center text-sm text-gray-500">
+      <footer className="bg-surface border-t border-border-subtle py-8">
+        <div className="max-w-6xl mx-auto px-6 text-center text-sm text-zinc-500">
           AI Content Factory · 让AI触手可得
         </div>
       </footer>
