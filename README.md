@@ -13,6 +13,7 @@
 | 抖音 | 开头钩子 | 20 个 3 秒吸睛钩子 |
 | 公众号 | 文章大纲 | 3-5 章节结构框架 |
 | 公众号 | 完整文章 | 2000-5000 字深度文章 |
+| 通用 | AI 配图 | 小红书 3:4、抖音 9:16、公众号 16:9 三种尺寸 |
 
 ## 已实现能力
 
@@ -21,6 +22,7 @@
 - 多 Provider 前端切换、配置状态提示、模型选择
 - SSE 流式生成展示
 - 非流式 JSON/纯文本响应兼容
+- AI 配图生成（Cloudflare Workers AI / Flux-1-schnell）
 - 本地历史记录、搜索、筛选、批量删除
 - 结果复制，导出 `.txt` / `.md` / `.html`
 
@@ -47,8 +49,8 @@ npm run dev
 Provider 列表配置在 `config/providers.json`。`ACTIVE_PROVIDER` 对应其中的 `id`，每个 Provider 的 API Key 变量名由 `apiKeyEnv` 指定。
 
 ```env
-# 可选：deepseek / openrouter / openai / nous-newapi / claude / gemini
-ACTIVE_PROVIDER=deepseek
+# 可选：deepseek / openrouter / openai / nous-newapi / claude / gemini / cloudflare
+ACTIVE_PROVIDER=cloudflare
 
 DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # OPENROUTER_API_KEY=your_openrouter_api_key_here
@@ -57,8 +59,12 @@ DEEPSEEK_API_KEY=your_deepseek_api_key_here
 # ANTHROPIC_API_KEY=your_anthropic_api_key_here
 # GEMINI_API_KEY=your_gemini_api_key_here
 
+# Cloudflare Workers AI
+CLOUDFLARE_API_TOKEN=your_cloudflare_api_token_here
+CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id_here
+
 # 当前激活 Provider 使用的模型名。不填时使用 providers.json 里的 defaultModel
-AI_MODEL=deepseek-v4-flash
+AI_MODEL=@cf/meta/llama-3.1-8b-instruct
 ```
 
 ## 项目结构
@@ -66,26 +72,28 @@ AI_MODEL=deepseek-v4-flash
 ```text
 src/
 ├── app/
-│   ├── api/generate/route.ts   # AI 生成 API，多渠道适配
-│   ├── api/providers/route.ts  # Provider 列表 API
-│   ├── layout.tsx              # 根布局
-│   └── page.tsx                # 首页与工作台
+│   ├── api/generate/route.ts        # AI 生成 API，多渠道适配
+│   ├── api/generate-image/route.ts  # AI 配图生成 API
+│   ├── api/providers/route.ts       # Provider 列表 API
+│   ├── layout.tsx                   # 根布局
+│   └── page.tsx                     # 首页与工作台
 ├── components/
-│   ├── GenerateForm.tsx        # 生成表单
-│   ├── HistoryList.tsx         # 本地历史记录
-│   ├── PlatformSelector.tsx    # 平台和内容类型选择器
-│   ├── ProviderSwitch.tsx      # Provider 切换
-│   ├── ResultDisplay.tsx       # 结果展示和导出
-│   └── Templates.tsx           # 常用模板
+│   ├── GenerateForm.tsx             # 生成表单
+│   ├── HistoryList.tsx              # 本地历史记录
+│   ├── PlatformSelector.tsx         # 平台和内容类型选择器
+│   ├── ProviderSwitch.tsx           # Provider 切换
+│   ├── ResultDisplay.tsx            # 结果展示和导出
+│   ├── SettingsPanel.tsx            # 设置面板
+│   └── Templates.tsx                # 常用模板
 ├── data/
-│   ├── prompts/index.ts        # 提示词模板和平台配置
-│   └── templates.ts            # 场景模板
+│   ├── prompts/index.ts             # 提示词模板和平台配置
+│   └── templates.ts                 # 场景模板
 ├── lib/
-│   ├── providers.ts            # Provider 加载、请求构造
-│   └── stream-parser.ts        # 多格式响应解析
+│   ├── providers.ts                 # Provider 加载、请求构造
+│   └── stream-parser.ts             # 多格式响应解析
 └── types/
-    ├── index.ts                # 业务类型
-    └── providers.ts            # Provider 类型
+    ├── index.ts                     # 业务类型
+    └── providers.ts                 # Provider 类型
 ```
 
 ## Provider 适配
@@ -97,8 +105,26 @@ src/
 | `openai` | Chat Completions 兼容格式 | `{baseUrl}/v1/chat/completions` |
 | `anthropic` | Claude Messages 格式 | `{baseUrl}/v1/messages` |
 | `gemini` | Gemini generateContent 格式 | `{baseUrl}/v1beta/models/{model}:generateContent` |
+| `cloudflare` | Cloudflare Workers AI 格式 | `{baseUrl}/v1/chat/completions` |
 
 OpenRouter 这类特殊路径可通过 `pathPrefix` 覆盖，例如 `/api/v1`。
+
+## AI 配图功能
+
+支持三种平台尺寸的配图生成：
+
+- **小红书**：3:4 竖版（768x1024）
+- **抖音**：9:16 竖版（720x1280）
+- **公众号**：16:9 横版（1280x720）
+
+默认使用 Cloudflare Workers AI 的 `@cf/black-forest-labs/flux-1-schnell` 模型。需要在 `.env` 中配置：
+
+```env
+CLOUDFLARE_API_TOKEN=your_token_here
+CLOUDFLARE_ACCOUNT_ID=your_account_id_here
+```
+
+**权限要求**：API Token 需要同时具备 `Workers AI - Read` 和 `Workers AI - Edit` 权限。
 
 ## 常用命令
 
