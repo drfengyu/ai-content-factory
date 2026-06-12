@@ -61,6 +61,11 @@ export function extractContentFromJson(data: unknown): string {
   if (typeof firstChoice.text === 'string') {
     return firstChoice.text;
   }
+  // Cloudflare Workers AI
+  const result = asObject(root.result);
+  if (typeof result.response === 'string') {
+    return result.response;
+  }
   return asString(root.content) || asString(root.text);
 }
 

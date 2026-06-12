@@ -95,11 +95,11 @@ export function SettingsPanel() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-surface border border-border-subtle rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex overflow-hidden"
+              className="bg-surface border border-border-subtle rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Sidebar */}
-              <aside className="w-44 shrink-0 border-r border-border-subtle bg-background/50 p-3 space-y-1">
+              <aside className="w-44 shrink-0 border-r border-border-subtle bg-background/50 p-3 space-y-1 overflow-y-auto">
                 <div className="flex items-center gap-2 px-2 py-2 text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   <Gear size={12} weight="fill" />
                   设置

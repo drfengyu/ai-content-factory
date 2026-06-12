@@ -63,5 +63,25 @@
     "defaultModel": "gemini-2.0-flash",
     "models": ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-1.5-pro"],
     "description": "Google Gemini 直连"
+  },
+  {
+    "id": "cloudflare",
+    "name": "Cloudflare Workers AI",
+    "type": "openai",
+    "baseUrl": "https://api.cloudflare.com/client/v4/accounts",
+    "apiKeyEnv": "CF_API_TOKEN",
+    "defaultModel": "@cf/meta/llama-3.1-8b-instruct",
+    "models": ["@cf/meta/llama-3.1-8b-instruct"],
+    "description": "Cloudflare Workers AI（免费额度，英文优先）"
+  },
+  {
+    "id": "fal",
+    "name": "FAL.ai",
+    "type": "fal",
+    "baseUrl": "https://fal.run/fal-ai",
+    "apiKeyEnv": "FAL_API_KEY",
+    "defaultModel": "flux/schnell",
+    "models": ["flux/schnell", "flux/dev", "flux-pro"],
+    "description": "FAL.ai 图片生成（Flux 模型）"
   }
 ]

@@ -9,6 +9,8 @@ import {
   FileCode,
   MarkdownLogo,
   Info,
+  Image,
+  Spinner,
 } from '@phosphor-icons/react';
 import { exportContent, ExportFormat } from '@/lib/export';
 import {
@@ -25,6 +27,7 @@ interface ResultDisplayProps {
   topic?: string;
   /** 用于显示平台相关的内容长度软提示 */
   platform?: Platform | null;
+  contentType?: string;
 }
 
 /** 每个平台给一句"内容上限"参考,UI 仅展示,不强制 */
@@ -34,8 +37,11 @@ const PLATFORM_HINTS: Record<Platform, { label: string; soft: number; tip: strin
   gongzhonghao: { label: '公众号文章', soft: 5000, tip: '公众号正文 ≤ 5000 字易读' },
 };
 
-export function ResultDisplay({ content, tokens, model, topic, platform }: ResultDisplayProps) {
+export function ResultDisplay({ content, tokens, model, topic, platform, contentType }: ResultDisplayProps) {
   const [copied, setCopied] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   // 跟随设置面板里的"默认导出格式"高亮对应按钮
   const settings = useSyncExternalStore(
     subscribeSettings,
@@ -52,6 +58,36 @@ export function ResultDisplay({ content, tokens, model, topic, platform }: Resul
 
   const handleDownload = (format: ExportFormat) => {
     exportContent(content, format, topic || 'content');
+  };
+
+  const handleGenerateImage = async () => {
+    if (!platform) return;
+    setGeneratingImage(true);
+    setImageError(null);
+
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          platform,
+          contentType: contentType || 'default'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate image');
+      }
+
+      const { imageUrl: url } = await response.json();
+      setImageUrl(url);
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setGeneratingImage(false);
+    }
   };
 
   if (!content) return null;
@@ -119,6 +155,14 @@ export function ResultDisplay({ content, tokens, model, topic, platform }: Resul
       {/* Actions */}
       <div className="flex gap-2 px-5 py-3 border-t border-border-subtle flex-wrap">
         <ActionButton icon={<CopySimple size={12} />} label={copied ? '已复制' : '复制'} onClick={handleCopy} active={copied} />
+        {platform && (
+          <ActionButton
+            icon={generatingImage ? <Spinner size={12} className="animate-spin" /> : <Image size={12} />}
+            label={generatingImage ? '生成中...' : '生成配图'}
+            onClick={handleGenerateImage}
+            disabled={generatingImage}
+          />
+        )}
         <ActionButton
           icon={<FileText size={12} />}
           label={defaultFormat === 'txt' ? '下载 .txt · 默认' : '下载 .txt'}
@@ -138,6 +182,32 @@ export function ResultDisplay({ content, tokens, model, topic, platform }: Resul
           highlight={defaultFormat === 'html'}
         />
       </div>
+
+      {/* Generated Image */}
+      {imageUrl && (
+        <div className="px-5 py-4 border-t border-border-subtle">
+          <div className="flex items-center gap-2 mb-2">
+            <Image size={14} className="text-accent" weight="bold" />
+            <span className="text-xs font-medium">生成的配图</span>
+          </div>
+          <img src={imageUrl} alt="Generated" className="w-full rounded-lg" />
+          <a
+            href={imageUrl}
+            download
+            className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-elevated text-zinc-500 hover:text-foreground transition-all"
+          >
+            <FileText size={12} />
+            下载图片
+          </a>
+        </div>
+      )}
+
+      {/* Image Error */}
+      {imageError && (
+        <div className="px-5 py-3 border-t border-border-subtle text-xs text-red-400">
+          ⚠️ {imageError}
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -148,6 +218,7 @@ function ActionButton({
   onClick,
   active,
   highlight,
+  disabled,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -155,17 +226,20 @@ function ActionButton({
   active?: boolean;
   /** 设置面板里被标为默认时高亮一圈边框 */
   highlight?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
+      disabled={disabled}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all
         ${active
           ? 'bg-accent text-white'
           : highlight
             ? 'bg-accent/10 text-accent border border-accent/30'
-            : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400 hover:text-foreground'}`}
+            : 'bg-surface-elevated text-zinc-500 dark:text-zinc-400 hover:text-foreground'}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {icon}
       {label}

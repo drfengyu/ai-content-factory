@@ -639,6 +639,7 @@ export default function Home() {
                         tokens={result.tokens}
                         model={result.model}
                         platform={platform}
+                        contentType={contentType || undefined}
                       />
                     </motion.div>
                   )}

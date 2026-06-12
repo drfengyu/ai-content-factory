@@ -185,6 +185,12 @@ export function buildRequestBody(
   const model = options?.model || process.env.AI_MODEL || resolved.config.defaultModel;
   const { temperature = 0.8, maxTokens = 20000, stream = true } = options || {};
 
+  // Cloudflare Workers AI 格式（使用 prompt 字段）
+  if (resolved.config.id === 'cloudflare') {
+    const prompt = messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+    return { prompt, max_tokens: maxTokens };
+  }
+
   // OpenAI 兼容格式
   if (resolved.config.type === 'openai') {
     return {
@@ -243,18 +249,25 @@ export function buildRequestBody(
  */
 export function getChatEndpoint(resolved: ResolvedProvider, modelOverride?: string): string {
   const base = resolved.resolvedBaseUrl; // 已包含 pathPrefix
+  const model = modelOverride || process.env.AI_MODEL || resolved.config.defaultModel;
 
   switch (resolved.config.type) {
     case 'anthropic':
       return `${resolved.config.baseUrl.replace(/\/+$/, '')}/v1/messages`;
 
-    case 'gemini': {
-      const model = modelOverride || process.env.AI_MODEL || resolved.config.defaultModel;
+    case 'gemini':
       return `${base}/models/${model}:generateContent?key=${resolved.apiKey}`;
-    }
 
     case 'openai':
     default:
+      // Cloudflare Workers AI 特殊路径
+      if (resolved.config.id === 'cloudflare') {
+        const accountId = process.env.CF_ACCOUNT_ID;
+        if (!accountId) {
+          throw new Error('CF_ACCOUNT_ID not configured');
+        }
+        return `${resolved.config.baseUrl}/${accountId}/ai/run/${model}`;
+      }
       return `${base}/chat/completions`;
   }
 }
